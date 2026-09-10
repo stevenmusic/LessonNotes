@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- 手機瀏覽器的網址列會吃這個顏色。切換主題時 applyTheme() 會一起改,
+     不然頁面是紙張色、上面那條還是黑的,看起來像沒對齊 -->
+<meta name="theme-color" content="#F4ECDA">
+<title id="pageTitle">LessonNotes — 琴課小簿</title>
+<meta name="description" content="LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230C0A07'/%3E%3Cpath d='M8 7h16v18H8z' fill='none' stroke='%23EFD48A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12 7v18' stroke='%23EFD48A' stroke-width='2'/%3E%3Cpath d='M16 13h5M16 18h5' stroke='%23EFD48A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ══ 設計代幣:與 ScrollScore / SightScore / HarmonyMap / LoudMaster / VinylVault
+   同一套語意變數,六個工具放在一起看是同一個產品。深色是整個工具箱的共同底色 ══ */
+:root{
+  --bg:#0C0A07;
+  --panel:#161209;
+  --panel-2:#201A0F;
+  --gold:#C9A24B;
+  --gold-bright:#EFD48A;
+  --gold-edge:#C9A24B;     /* 只畫線、不承載文字的金。深色底下跟 --gold 同值 */
+  --ivory:#F4ECDA;
+  --muted:#8A7D5F;
+  --muted-bright:#B6A576;
+  --line:#2A2415;
+  --rule-line:rgba(201,162,75,.10);   /* 簿本內頁的橫線 */
+  --danger:#C1573F;
+  --shadow-sm:0 4px 14px rgba(0,0,0,.35);
+  --shadow-md:0 10px 26px rgba(0,0,0,.5);
+  --radius-sm:8px;
+  --radius-md:14px;
+  --radius-lg:18px;
+  --radius-pill:999px;
+  --fs-2xs:11px;
+  --fs-xs:12px;
+  --fs-sm:13px;
+  --fs-md:14px;
+  --fs-lg:16px;
+  --fs-xl:19px;
+  --fs-2xl:26px;
+  color-scheme:dark;
+}
+/* ══ 紙張主題:同一組語意變數換一套值,版面與元件一行都不用改寫 ══
+   這一頁是聯絡簿,紙張色是它的預設(見 themeIsLight()),而不是另外長一個樣子的工具。
+   底 / 字 / 卡片用指定的 #F4ECDA / #3A2F22 / #EFE0C4;金色拆成兩個角色:
+   #C9A24B 在 #F4ECDA 上只有約 1.9:1,當文字讀不動,所以文字與圖示用壓深的
+   #856418(約 4.5:1),原本的 #C9A24B 留給框線與橫線這種不用讀的地方。 */
+body.light{
+  --bg:#F4ECDA;
+  --panel:#EFE0C4;
+  --panel-2:#E8D6B2;
+  --gold:#856418;
+  --gold-bright:#6B5115;
+  --gold-edge:#C9A24B;
+  --ivory:#3A2F22;
+  --muted:#6F6450;
+  --muted-bright:#544B3B;
+  --line:#DCCBA4;
+  --rule-line:rgba(138,110,51,.16);
+  --danger:#9C3F2A;
+  --shadow-sm:0 4px 14px rgba(90,72,30,.10);
+  --shadow-md:0 10px 26px rgba(90,72,30,.16);
+  color-scheme:light;
+}
+/* touch-action:manipulation 只關掉「雙擊放大」這個手勢,雙指縮放完全不受影響——
+   跟直接鎖 viewport 的 user-scalable=no 不一樣,那個連縮放需求的使用者也會一起擋掉 */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+/* hidden 屬性靠的是瀏覽器預設樣式表的 display:none,任何一條寫了 display 的
+   class 規則都會蓋過它——.slip 是 display:flex,沒有這條的話「空的錯誤紙條」
+   會一直留在畫面上(踩過)。要藏就用 el.hidden,樣式在這裡一次收乾淨 */
+[hidden]{display:none !important}
+html{height:100%;-webkit-text-size-adjust:100%}
+body{
+  min-height:100%;
+  background:var(--bg);color:var(--ivory);
+  font-family:"Noto Sans TC",sans-serif;
+  display:flex;flex-direction:column;
+  transition:background .2s,color .2s;
+}
+
+/* ── 頂欄(與其他五個工具逐項相同)───────────────────────── */
+header{
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:8px 14px;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--line);
+  background:var(--panel);
+  position:sticky;top:0;z-index:20;
+}
+.header-left,.header-right{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+/* 回首頁的路徑跟 ScrollScore / SightScore / HarmonyMap / LoudMaster 用同一套安靜文字連結 */
+.home-link{
+  display:inline-flex;align-items:center;gap:4px;flex:none;
+  color:var(--muted);font-size:var(--fs-sm);text-decoration:none;
+  padding:6px 4px;border-radius:var(--radius-sm);transition:color .15s;
+}
+.home-link:hover,.home-link:focus-visible{color:var(--gold-bright)}
+/* 品牌名的字級、字距與各斷點與 ScrollScore 完全相同,六個工具的品牌名要長得一模一樣 */
+header h1{
+  font-family:"Noto Serif TC",serif;
+  font-size:clamp(12px, 3.7vw, var(--fs-lg));
+  letter-spacing:clamp(.02em, .55vw, .12em);
+  font-weight:700;color:var(--gold);white-space:nowrap;
+  flex:none;
+}
+header h1 span{color:var(--ivory);font-weight:600}
+/* 副標獨立成一個元素,不寫進 h1 裡面,免得動到照抄過來的品牌名字級 */
+.tagline{color:var(--muted);font-size:var(--fs-xs);letter-spacing:.04em;white-space:nowrap}
+@media (max-width:600px){ .tagline{display:none} }
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1;
+  border:1px solid var(--gold);background:transparent;color:var(--gold);
+  font-family:inherit;font-size:var(--fs-md);font-weight:500;
+  padding:8px 16px;height:38px;border-radius:var(--radius-pill);cursor:pointer;
+  transition:background .2s,color .2s,border-color .2s;white-space:nowrap;
+  text-decoration:none;
+}
+.btn svg{flex:none}
+.btn:active{background:var(--gold);color:var(--bg)}
+.btn:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
+.btn.primary{background:var(--gold);color:var(--bg);font-weight:700}
+.btn.ghost{border-color:var(--line);color:var(--muted-bright)}
+.btn.small{height:32px;padding:0 12px;font-size:var(--fs-sm)}
+.btn[disabled]{opacity:.5;cursor:default}
+/* 語言鈕與主題鈕統一用正圓形(跟其他五個工具同一套外觀),語言鈕只放文字不放圖示 */
+#langToggle{aspect-ratio:1;padding:0}
+#langToggle[aria-pressed="true"],#themeToggle[aria-pressed="true"]{background:var(--gold);color:var(--bg)}
+/* 頂欄的內距與間距跟著寬度連續縮放,不用斷點硬切(照 ScrollScore 的值) */
+@media (max-width:600px){
+  header{padding:8px clamp(6px, 2.2vw, 10px);gap:clamp(4px, 1.4vw, 6px);flex-wrap:nowrap}
+  .header-left,.header-right{gap:clamp(4px, 1.4vw, 6px)}
+  .btn{padding:0 10px;height:34px;font-size:var(--fs-sm)}
+  .btn-label{display:none}
+}
+@media (max-width:380px){ .btn{padding:0 8px;height:32px} }
+@media (max-width:340px){ .btn{padding:0 5px} }
+
+/* ── 版面 ───────────────────────── */
+main{
+  flex:1;width:100%;max-width:680px;margin:0 auto;
+  padding:clamp(26px, 6vw, 52px) 16px 40px;
+}
+.eyebrow{
+  font-size:var(--fs-xs);letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px;font-weight:500;
+}
+h2.title{
+  font-family:"Noto Serif TC",serif;font-weight:700;
+  font-size:clamp(28px, 7vw, 40px);line-height:1.22;
+  color:var(--ivory);letter-spacing:.02em;
+}
+.sub{color:var(--muted-bright);font-size:var(--fs-lg);line-height:1.85;margin-top:14px}
+.rule{height:1px;background:linear-gradient(90deg,var(--gold-edge),transparent);opacity:.7;margin:clamp(24px, 5vw, 34px) 0}
+
+/* ── 簿本內頁 ──
+   橫線是畫在底色上的 repeating gradient,不是一堆 <div>。行高 30px 與 .field 的
+   行距對齊,字才不會踩在線上 */
+.sheet{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.sheet-head{
+  display:flex;align-items:center;gap:10px;
+  padding:16px 20px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(201,162,75,.07), transparent);
+}
+.sheet-head .mark{
+  width:32px;height:32px;flex:none;border-radius:9px;
+  border:1px solid var(--line);background:var(--panel-2);
+  display:grid;place-items:center;color:var(--gold);
+}
+.sheet-head .mark svg{width:17px;height:17px}
+.sheet-head h3{
+  font-family:"Noto Serif TC",serif;font-weight:600;
+  font-size:var(--fs-xl);color:var(--gold);line-height:1.3;
+}
+.sheet-body{
+  padding:22px 20px 24px;
+  background-image:repeating-linear-gradient(
+    to bottom, transparent 0 29px, var(--rule-line) 29px 30px);
+}
+.sheet-body > p{font-size:var(--fs-md);color:var(--muted-bright);line-height:30px}
+.sheet-body > p + p{margin-top:30px}
+.fineprint{font-size:var(--fs-sm);color:var(--muted);line-height:1.85;margin-top:16px}
+
+/* ── Google 登入鈕 ──
+   這顆用 Google 官方的四色 G(品牌規範要求),是整頁唯一不是線稿圖示的地方;
+   其餘圖示一律沿用 ScrollScore 那套 24 格線稿。按鈕本體維持 .btn 的造型,
+   不要換成 Google 自家的白底藍字樣式——那跟其他五個工具就不是同一套了 */
+.signin-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:26px}
+#signInBtn{height:46px;padding:0 22px;font-size:var(--fs-lg)}
+#signInBtn .g{width:18px;height:18px;flex:none}
+.spinner{
+  width:15px;height:15px;flex:none;border-radius:50%;
+  border:2px solid currentColor;border-top-color:transparent;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── 扉頁:登入後的那一頁 ───────────────────────── */
+.field{display:flex;flex-wrap:wrap;gap:4px 14px;line-height:30px;align-items:baseline}
+.field + .field{margin-top:30px}
+.field dt{
+  flex:none;min-width:6.5em;
+  font-size:var(--fs-sm);color:var(--muted);letter-spacing:.06em;
+}
+.field dd{
+  flex:1;min-width:0;font-size:var(--fs-lg);color:var(--ivory);
+  font-weight:500;overflow-wrap:anywhere;
+}
+.field dd.serial{
+  font-size:var(--fs-sm);color:var(--muted-bright);font-weight:400;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;
+}
+.person{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.person img{
+  width:52px;height:52px;flex:none;border-radius:50%;
+  border:1px solid var(--line);background:var(--panel-2);object-fit:cover;
+}
+.person .who{min-width:0}
+.person{padding-bottom:22px;border-bottom:1px solid var(--line)}
+.person .who strong{
+  display:block;font-family:"Noto Serif TC",serif;font-weight:600;
+  font-size:var(--fs-2xl);line-height:1.3;color:var(--ivory);overflow-wrap:anywhere;
+}
+.person .who span{display:block;font-size:var(--fs-sm);color:var(--muted);letter-spacing:.06em;margin-bottom:2px}
+
+/* ── 夾在頁裡的紙條:提醒與錯誤 ───────────────────────── */
+.slip{
+  display:flex;gap:10px;align-items:flex-start;
+  margin-top:22px;padding:13px 15px;
+  border:1px solid var(--line);border-left:3px solid var(--gold-edge);
+  border-radius:var(--radius-sm);background:var(--panel-2);
+  font-size:var(--fs-sm);color:var(--muted-bright);line-height:1.8;
+}
+.slip.warn{border-left-color:var(--danger);color:var(--ivory)}
+.slip svg{width:16px;height:16px;flex:none;margin-top:.3em;color:var(--gold)}
+.slip.warn svg{color:var(--danger)}
+.slip code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:var(--fs-xs);
+  background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;
+}
+
+/* ── 還在裝訂中的幾頁 ───────────────────────── */
+.binding h4{
+  font-family:"Noto Serif TC",serif;font-weight:600;
+  font-size:var(--fs-lg);color:var(--ivory);margin-bottom:4px;
+}
+.binding > p{font-size:var(--fs-sm);color:var(--muted);line-height:1.8;margin-bottom:18px}
+.binding ul{list-style:none;display:grid;gap:10px}
+.binding li{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:13px 16px;border:1px dashed var(--line);border-radius:var(--radius-md);
+}
+.binding li svg{width:17px;height:17px;flex:none;margin-top:.15em;color:var(--muted)}
+.binding li b{display:block;font-size:var(--fs-md);color:var(--muted-bright);font-weight:500;line-height:1.5}
+.binding li em{display:block;font-style:normal;font-size:var(--fs-sm);color:var(--muted);line-height:1.7;margin-top:2px}
+
+footer{
+  padding:16px 14px calc(18px + env(safe-area-inset-bottom));
+  text-align:center;color:var(--muted);font-size:var(--fs-2xs);line-height:1.8;
+  border-top:1px solid var(--line);
+}
+
+/* ── 觸控裝置:點擊目標放大(照抄 ScrollScore 的 pointer:coarse 規則)────────── */
+@media (pointer:coarse){
+  .btn{height:44px;min-width:44px}
+  #signInBtn{height:50px}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<script>
+/* 主題要在畫面畫出來之前就定下來。這一頁的預設是紙張色,等到模組腳本才套用的話,
+   使用者會先看到一下深色再跳成紙張色。下面 themeIsLight() 的規則跟這裡一模一樣,
+   兩邊要一起改 */
+(function(){
+  try { document.body.classList.toggle("light", localStorage.getItem("sm_theme") !== "dark"); }
+  catch (e) { document.body.classList.add("light"); }
+})();
+</script>
+
+<header>
+  <div class="header-left">
+    <a href="https://stevenmusic.github.io/" class="home-link" data-i18n-attr="aria-label:homeAria,title:homeAria">
+      <span aria-hidden="true">←</span><span class="btn-label" data-i18n="homeText">首頁</span>
+    </a>
+    <h1>Lesson<span>Notes</span></h1>
+    <span class="tagline" data-i18n="tagline">琴課小簿</span>
+  </div>
+  <div class="header-right">
+    <!-- 主題在前、語言在後,跟其他五個工具的 header-right 同一個順序 -->
+    <button class="btn" id="themeToggle" aria-pressed="false" data-i18n-attr="aria-label:themeToggleLabel,title:themeToggleTitle" title="切換紙張/夜間主題">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M12 3a9 9 0 000 18z" fill="currentColor" stroke="none"/>
+      </svg>
+    </button>
+    <button class="btn" id="langToggle" aria-pressed="false" data-i18n-attr="aria-label:langToggleLabel,title:langToggleTitle" data-i18n="langToggleText">EN</button>
+  </div>
+</header>
+
+<main>
+  <p class="eyebrow" data-i18n="eyebrow">老師與家長的聯絡簿</p>
+  <h2 class="title" data-i18n="title">琴課小簿</h2>
+  <p class="sub" data-i18n="lede">一本兩邊都看得到的簿子。這堂課練到哪裡、下週要帶什麼、家裡練得順不順，寫在同一頁上，不必再靠訊息翻來翻去。</p>
+
+  <div class="rule"></div>
+
+  <!-- ══ 還沒翻開:登入 ══ -->
+  <section class="sheet" id="viewOut" aria-live="polite">
+    <div class="sheet-head">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 10h5M12 14h5"/></svg>
+      </span>
+      <h3 data-i18n="outTitle">翻開屬於你的那一頁</h3>
+    </div>
+    <div class="sheet-body">
+      <p data-i18n="outBody">用 Google 帳號署名一次，這本簿子就記得你是誰。老師寫下的課堂紀錄、家長回報的練習情況，之後都會收在這裡。</p>
+      <div class="signin-row">
+        <button class="btn primary" id="signInBtn" type="button">
+          <!-- Google 官方四色 G:品牌規範要求用原圖,不改色、不描邊 -->
+          <svg class="g" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2.1 5-4.4 6.5v5.4h7.1c4.2-3.8 6.6-9.5 6.6-15.9z"/>
+            <path fill="#34A853" d="M24 46c6 0 11-2 14.5-5.4l-7.1-5.4c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.6-3.8-12.3-9.1H4.4v5.6C8 41.1 15.4 46 24 46z"/>
+            <path fill="#FBBC05" d="M11.7 28.2c-.4-1.3-.7-2.7-.7-4.2s.3-2.9.7-4.2v-5.6H4.4A21.9 21.9 0 002 24c0 3.6.9 6.9 2.4 9.8l7.3-5.6z"/>
+            <path fill="#EA4335" d="M24 10.3c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 3.8 30 2 24 2 15.4 2 8 6.9 4.4 14.2l7.3 5.6C13.4 14.1 18.3 10.3 24 10.3z"/>
+          </svg>
+          <span data-i18n="signInText">用 Google 帳號署名</span>
+        </button>
+      </div>
+      <p class="fineprint" data-i18n="outFine">署名只用來認出你是哪一位，不會翻動你 Google 帳號裡的任何東西。</p>
+      <div class="slip warn" id="errSlip" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5"/><path d="M12 17.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+        <span id="errText"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 簿本還沒裝上封面:firebaseConfig 還是 PASTE_HERE ══ -->
+  <section class="sheet" id="viewSetup" hidden>
+    <div class="sheet-head">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 12h5"/></svg>
+      </span>
+      <h3 data-i18n="setupTitle">簿本還沒裝訂完成</h3>
+    </div>
+    <div class="sheet-body">
+      <p data-i18n="setupBody">這一頁還在等一份設定資料。填進去之後，署名的入口就會出現在這裡。</p>
+      <div class="slip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16v-5"/><path d="M12 8.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+        <span data-i18n-html="setupHint">把 <code>index.html</code> 裡 <code>firebaseConfig</code> 的六個 <code>PASTE_HERE</code> 換成 Firebase 主控台給的值，並把這個網域加進 Authentication 的允許清單。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 已經翻開:扉頁 ══ -->
+  <section class="sheet" id="viewIn" hidden>
+    <div class="sheet-head">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13.5l1.8 1.8 3.7-4"/></svg>
+      </span>
+      <h3 data-i18n="inTitle">這一頁是你的</h3>
+    </div>
+    <div class="sheet-body">
+      <div class="person">
+        <img id="photo" alt="" hidden width="52" height="52" referrerpolicy="no-referrer">
+        <div class="who">
+          <span data-i18n="inCaption">這本簿子的主人</span>
+          <strong id="fName">—</strong>
+        </div>
+      </div>
+      <dl>
+        <div class="field"><dt data-i18n="labelEmail">聯絡信箱</dt><dd id="fEmail">—</dd></div>
+        <div class="field"><dt data-i18n="labelSerial">簿本編號</dt><dd class="serial" id="fUid">—</dd></div>
+      </dl>
+      <p class="fineprint" data-i18n="inFine">簿本編號是這本簿子認人用的記號，不必特別記下來。</p>
+      <div class="signin-row">
+        <button class="btn ghost" id="signOutBtn" type="button" data-i18n="signOutText">闔上簿本</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="rule"></div>
+
+  <section class="binding">
+    <h4 data-i18n="bindTitle">接下來要裝訂的幾頁</h4>
+    <p data-i18n="bindBody">這一版先把署名做好，讓老師與家長進來時各自認得自己的那一頁。下面幾頁還在寫。</p>
+    <ul>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v15H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
+        <span><b data-i18n="bind1">課堂紀錄</b><em data-i18n="bind1d">這堂課練了什麼、進度到哪一小節、下週要帶的譜。</em></span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V8"/><path d="M6 20v-6"/><path d="M18 20V4"/></svg>
+        <span><b data-i18n="bind2">家裡的練習</b><em data-i18n="bind2d">家長按一下就記一次，老師看得到這週在家練了幾天。</em></span>
+      </li>
+      <li>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+        <span><b data-i18n="bind3">上課日與堂數</b><em data-i18n="bind3d">下一堂是哪天、這期還剩幾堂、請假怎麼補。</em></span>
+      </li>
+    </ul>
+  </section>
+</main>
+
+<footer>LessonNotes</footer>
+
+<script type="module">
+"use strict";
+/* Firebase v10 modular ESM —— 直接吃 gstatic 的 CDN,沒有打包步驟、沒有相依套件。
+   用動態 import() 而不是頂層 import:靜態 import 抓不到(離線、gstatic 在某些地區
+   連不上)整個模組都不會執行,連語言與主題切換都會一起死掉。改成載入失敗只影響署名,
+   這一頁其他部分照常能看、能切語言 */
+const FB_VER = "10.14.1";   // v10 最後一版穩定版
+const FB_CDN = "https://www.gstatic.com/firebasejs/" + FB_VER;
+
+const $ = id => document.getElementById(id);
+
+/* ══════════════════════════════════════════════════════════════
+   0. 中英雙語:只維護「一份」DOM
+   ──────────────────────────────────────────────────────────────
+   所有靜態文字掛 data-i18n / data-i18n-attr / data-i18n-html,
+   applyLanguage() 統一走一遍 DOM 換字,不是中英文各刻一份畫面。
+   文案刻意寫成紙本聯絡簿的口氣:署名、翻開、闔上、簿本編號,
+   不用「連線成功」「使用者編號」這種系統用語。
+   ══════════════════════════════════════════════════════════════ */
+const I18N = {
+  zh: {
+    pageTitle: "LessonNotes — 琴課小簿",
+    metaDescription: "LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿",
+    homeAria: "回首頁", homeText: "首頁", tagline: "琴課小簿",
+    langToggleText: "EN", langToggleLabel: "切換為英文", langToggleTitle: "切換語言",
+    themeToggleLabel: "夜間模式", themeToggleTitle: "切換紙張/夜間主題",
+    eyebrow: "老師與家長的聯絡簿",
+    title: "琴課小簿",
+    lede: "一本兩邊都看得到的簿子。這堂課練到哪裡、下週要帶什麼、家裡練得順不順，寫在同一頁上，不必再靠訊息翻來翻去。",
+    outTitle: "翻開屬於你的那一頁",
+    outBody: "用 Google 帳號署名一次，這本簿子就記得你是誰。老師寫下的課堂紀錄、家長回報的練習情況，之後都會收在這裡。",
+    signInText: "用 Google 帳號署名",
+    signInBusy: "正在翻開…",
+    outFine: "署名只用來認出你是哪一位，不會翻動你 Google 帳號裡的任何東西。",
+    setupTitle: "簿本還沒裝訂完成",
+    setupBody: "這一頁還在等一份設定資料。填進去之後，署名的入口就會出現在這裡。",
+    setupHint: '把 <code>index.html</code> 裡 <code>firebaseConfig</code> 的六個 <code>PASTE_HERE</code> 換成 Firebase 主控台給的值，並把這個網域加進 Authentication 的允許清單。',
+    inTitle: "這一頁是你的",
+    inCaption: "這本簿子的主人",
+    labelEmail: "聯絡信箱", labelSerial: "簿本編號",
+    inFine: "簿本編號是這本簿子認人用的記號，不必特別記下來。",
+    signOutText: "闔上簿本",
+    noName: "還沒寫上名字",
+    noEmail: "沒有留信箱",
+    bindTitle: "接下來要裝訂的幾頁",
+    bindBody: "這一版先把署名做好，讓老師與家長進來時各自認得自己的那一頁。下面幾頁還在寫。",
+    bind1: "課堂紀錄", bind1d: "這堂課練了什麼、進度到哪一小節、下週要帶的譜。",
+    bind2: "家裡的練習", bind2d: "家長按一下就記一次，老師看得到這週在家練了幾天。",
+    bind3: "上課日與堂數", bind3d: "下一堂是哪天、這期還剩幾堂、請假怎麼補。",
+    /* 錯誤訊息也照紙本的口氣寫。Firebase 的 code 一律不顯示在畫面上 */
+    errClosed: "那扇窗被關上了，還沒署名。要再試一次嗎？",
+    errBlocked: "瀏覽器把那扇窗擋住了。允許這個網站開啟視窗之後再試一次。",
+    errNetwork: "連不上去，像是網路斷了。確認連線之後再試一次。",
+    errDomain: "這個網址還沒寫進簿本的名冊裡，暫時無法署名。",
+    errPending: "上一次的署名還沒結束，稍等一下再按。",
+    errGeneric: "一時翻不開這一頁，請稍後再試一次。",
+    errOffline: "現在連不上署名的服務，暫時沒辦法署名。等一下重新整理這一頁再試。",
+  },
+  en: {
+    pageTitle: "LessonNotes — the lesson notebook",
+    metaDescription: "LessonNotes — a shared lesson notebook for music teachers and families",
+    homeAria: "Back to home", homeText: "Home", tagline: "the lesson notebook",
+    langToggleText: "中", langToggleLabel: "Switch to Chinese", langToggleTitle: "Switch language",
+    themeToggleLabel: "Night mode", themeToggleTitle: "Switch paper/night theme",
+    eyebrow: "For teachers and families",
+    title: "The lesson notebook",
+    lede: "One notebook both sides can read. What the lesson covered, what to bring next week, how practice went at home — all on the same page, instead of scattered through a chat thread.",
+    outTitle: "Open your page",
+    outBody: "Sign your name once with Google and the notebook will remember you. The teacher's lesson notes and the family's practice reports are kept here.",
+    signInText: "Sign with Google",
+    signInBusy: "Opening…",
+    outFine: "Your name is only used to tell who you are. Nothing in your Google account is touched.",
+    setupTitle: "The notebook isn't bound yet",
+    setupBody: "This page is still waiting on its settings. Once they are filled in, the place to sign your name appears here.",
+    setupHint: 'Replace the six <code>PASTE_HERE</code> values in <code>firebaseConfig</code> inside <code>index.html</code> with the ones from the Firebase console, and add this domain to the Authentication allowed list.',
+    inTitle: "This page is yours",
+    inCaption: "This notebook belongs to",
+    labelEmail: "Contact email", labelSerial: "Notebook no.",
+    inFine: "The notebook number is just how this notebook tells people apart — no need to remember it.",
+    signOutText: "Close the notebook",
+    noName: "No name written yet",
+    noEmail: "No email on file",
+    bindTitle: "Pages still being bound",
+    bindBody: "This first version only handles signing in, so teachers and families each land on their own page. The pages below are still being written.",
+    bind1: "Lesson notes", bind1d: "What was covered, which bar the piece reached, which scores to bring next week.",
+    bind2: "Practice at home", bind2d: "One tap from a parent logs a session, so the teacher can see how the week went.",
+    bind3: "Lesson days and credits", bind3d: "When the next lesson is, how many are left this term, how to make up a missed one.",
+    errClosed: "That window was closed before you signed. Try again?",
+    errBlocked: "The browser blocked that window. Allow pop-ups for this site and try again.",
+    errNetwork: "Couldn't reach the other side — the connection looks down. Check it and try again.",
+    errDomain: "This address isn't on the notebook's list yet, so signing in is unavailable.",
+    errPending: "The last attempt hasn't finished. Give it a moment before pressing again.",
+    errGeneric: "That page wouldn't open just now. Please try again shortly.",
+    errOffline: "The signing service can't be reached right now. Reload this page and try again in a moment.",
+  },
+};
+const LANG_KEY = "sm_lang"; // 與其他五個工具 + 首頁共用同一把 key
+let LANG = "zh";
+try { LANG = localStorage.getItem(LANG_KEY) === "en" ? "en" : "zh"; } catch (e) {}
+
+function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.zh[key] || key; }
+
+/* Google 的署名視窗預設跟瀏覽器語言走,頁面切成英文時那扇窗還是中文就對不起來 */
+function syncAuthLanguage(){ if (auth) auth.languageCode = LANG === "en" ? "en" : "zh-TW"; }
+
+function applyLanguage(lang){
+  LANG = (lang === "en") ? "en" : "zh";
+  try { localStorage.setItem(LANG_KEY, LANG); } catch (e) {}
+  document.documentElement.lang = LANG === "en" ? "en" : "zh-Hant";
+  document.title = t("pageTitle");
+  const titleTag = $("pageTitle");
+  if (titleTag) titleTag.textContent = t("pageTitle");
+  const metaDesc = document.querySelector('meta[name="description"]');
+  if (metaDesc) metaDesc.setAttribute("content", t("metaDescription"));
+
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.getAttribute("data-i18n")); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.getAttribute("data-i18n-html")); });
+  document.querySelectorAll("[data-i18n-attr]").forEach(el => {
+    el.getAttribute("data-i18n-attr").split(",").forEach(pair => {
+      const [attr, key] = pair.split(":");
+      if (attr && key) el.setAttribute(attr.trim(), t(key.trim()));
+    });
+  });
+  $("langToggle").setAttribute("aria-pressed", String(LANG === "en"));
+  syncAuthLanguage();
+
+  /* 畫面上動態寫進去的字(扉頁的三欄、錯誤紙條、登入鈕的忙碌狀態)不吃 data-i18n,
+     換語言之後要重畫一次,否則中文頁面會留著英文的「No name written yet」 */
+  renderUser();
+  if (lastErrKey) showError(lastErrKey);
+  setBusy(busy);
+}
+
+/* ══ 主題 ══
+   sm_theme 是六個工具共用的 key,值只有 "light" / "dark"。同一個 origin,在任一個
+   工具切過主題,其他幾個打開就是同一個。沒存過的時候用本工具自己的預設——共用的是
+   「使用者的選擇」,不是「還沒選之前的預設」。這一頁是聯絡簿,預設是紙張色;
+   其他五個工具預設深色。<body> 開頭那段 bootstrap 的判斷要跟這裡一致。 */
+const THEME_KEY = "sm_theme";
+function themeIsLight(){
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    if (v === "light" || v === "dark") return v === "light";
+  } catch (e) {}
+  return true;
+}
+function applyTheme(){
+  const on = themeIsLight();
+  document.body.classList.toggle("light", on);
+  $("themeToggle").setAttribute("aria-pressed", String(!on));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", on ? "#F4ECDA" : "#0C0A07");
+}
+$("themeToggle").onclick = () => {
+  try { localStorage.setItem(THEME_KEY, themeIsLight() ? "dark" : "light"); } catch (e) {}
+  applyTheme();
+};
+$("langToggle").onclick = () => applyLanguage(LANG === "zh" ? "en" : "zh");
+
+/* ══════════════════════════════════════════════════════════════
+   1. Firebase v10 modular ESM —— 設定與登入流程
+   ══════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "PASTE_HERE",
+  authDomain: "PASTE_HERE",
+  projectId: "PASTE_HERE",
+  storageBucket: "PASTE_HERE",
+  messagingSenderId: "PASTE_HERE",
+  appId: "PASTE_HERE",
+};
+
+/* 還沒把設定填進去就初始化的話,按下署名只會收到 auth/invalid-api-key,畫面上看起來
+   像是壞了。所以先檢查,沒填完就換成「還沒裝訂完成」那一頁,連 Firebase 都不初始化 */
+const CONFIGURED = Object.values(firebaseConfig)
+  .every(v => typeof v === "string" && v && !v.includes("PASTE_HERE"));
+
+let auth = null;
+let busy = false;
+/* 署名這條路整個不能用(CDN 抓不到)。setBusy() 要看它,否則使用者切一次語言
+   就會把那顆按不動的按鈕又打開 */
+let unavailable = false;
+let lastErrKey = null;
+let currentUser = null;
+
+function show(view){
+  $("viewOut").hidden   = view !== "out";
+  $("viewIn").hidden    = view !== "in";
+  $("viewSetup").hidden = view !== "setup";
+}
+function showError(key){
+  lastErrKey = key;
+  const slip = $("errSlip");
+  if (!key) { slip.hidden = true; $("errText").textContent = ""; return; }
+  $("errText").textContent = t(key);
+  slip.hidden = false;
+}
+function setBusy(on){
+  busy = on;
+  const btn = $("signInBtn");
+  btn.disabled = on || unavailable;
+  btn.querySelector("span").textContent = on ? t("signInBusy") : t("signInText");
+  /* 轉圈的時候把四色 G 換成 spinner:按下去到彈出視窗開起來之間有一小段空白,
+     按鈕沒有任何變化的話使用者會再按一次 */
+  btn.querySelector(".g").hidden = on;
+  let sp = btn.querySelector(".spinner");
+  if (on && !sp) { sp = document.createElement("i"); sp.className = "spinner"; btn.prepend(sp); }
+  if (!on && sp) sp.remove();
+}
+function renderUser(){
+  const u = currentUser;
+  if (!u) return;
+  const name = u.displayName || t("noName");
+  $("fName").textContent = name;
+  $("fEmail").textContent = u.email || t("noEmail");
+  $("fUid").textContent = u.uid;
+  const img = $("photo");
+  if (u.photoURL) { img.src = u.photoURL; img.alt = name; img.hidden = false; }
+  else { img.hidden = true; img.removeAttribute("src"); }
+}
+
+/* Firebase 的錯誤代碼對應到紙本口氣的句子。沒對到的一律走 errGeneric——
+   把原始代碼丟到畫面上對家長沒有任何意義 */
+function errKeyFor(code){
+  switch (code) {
+    case "auth/popup-closed-by-user":
+    case "auth/user-cancelled":          return "errClosed";
+    case "auth/cancelled-popup-request": return "errPending";
+    case "auth/popup-blocked":           return "errBlocked";
+    case "auth/network-request-failed":  return "errNetwork";
+    case "auth/unauthorized-domain":
+    case "auth/operation-not-allowed":
+    case "auth/invalid-api-key":         return "errDomain";
+    default:                             return "errGeneric";
+  }
+}
+
+/* 先把主題與語言套好,再去載 Firebase。順序反過來的話,存了英文偏好的使用者
+   會先看到一整頁中文,等 CDN 回來才換——而 CDN 慢的時候那是好幾秒 */
+applyTheme();
+applyLanguage(LANG);
+
+if (CONFIGURED) startSignIn();   // 刻意不 await:署名模組慢,不該擋住整頁
+else show("setup");
+
+async function startSignIn(){
+  let fb;
+  try {
+    const [appMod, authMod] = await Promise.all([
+      import(FB_CDN + "/firebase-app.js"),
+      import(FB_CDN + "/firebase-auth.js"),
+    ]);
+    fb = { ...appMod, ...authMod };
+  } catch (e) {
+    /* 連 CDN 都抓不到,署名這件事這次就做不了。把入口關掉並說清楚,
+       不要留一顆按下去沒反應的按鈕 */
+    unavailable = true;
+    setBusy(false);          // 內部會照 unavailable 把按鈕留在停用狀態
+    showError("errOffline");
+    return;
+  }
+  const { initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, signOut,
+          onAuthStateChanged, setPersistence, browserLocalPersistence } = fb;
+
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  /* 彈出視窗的語言跟著這一頁走(modular SDK 沒有 auth.useDeviceLanguage(),
+     那是 compat 版的方法;這裡直接設 languageCode) */
+  syncAuthLanguage();
+  /* 署名要留到下次打開還在——家長不會想每次進來都簽一遍。
+     瀏覽器不給寫本機儲存(無痕模式之類)時不要讓整頁掛掉,退回只記這一次 */
+  setPersistence(auth, browserLocalPersistence).catch(() => {});
+
+  onAuthStateChanged(auth, user => {
+    currentUser = user;
+    setBusy(false);
+    if (user) { showError(null); renderUser(); show("in"); }
+    else { show("out"); }
+  });
+
+  const provider = new GoogleAuthProvider();
+  /* 同一台裝置上老師與家長可能用不同帳號,每次都讓使用者自己選要用哪一個,
+     不要默默沿用上次那個 */
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  $("signInBtn").onclick = async () => {
+    if (busy) return;
+    showError(null);
+    setBusy(true);
+    try {
+      await signInWithPopup(auth, provider);
+      /* 畫面交給 onAuthStateChanged 換,這裡不要自己再寫一次 */
+    } catch (e) {
+      setBusy(false);
+      showError(errKeyFor(e && e.code));
+    }
+  };
+
+  $("signOutBtn").onclick = async () => {
+    try { await signOut(auth); } catch (e) { showError("errGeneric"); }
+  };
+}
+</script>
+</body>
+</html>
