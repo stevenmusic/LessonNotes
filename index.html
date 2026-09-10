@@ -147,9 +147,12 @@ main{
   font-size:var(--fs-xs);letter-spacing:.22em;text-transform:uppercase;
   color:var(--gold);margin-bottom:12px;font-weight:500;
 }
+/* 字級照 LoudMaster 的頁面標題(clamp(24px, 7vw, 32px))。字型與字重五個工具本來
+   就同一份(Noto Serif TC 600/700),但這裡原本開到 40px —— 比其他工具最大的
+   serif 還大一截,放在一起看就像換了一套字。字級也是字型的一部分 */
 h2.title{
   font-family:"Noto Serif TC",serif;font-weight:700;
-  font-size:clamp(28px, 7vw, 40px);line-height:1.22;
+  font-size:clamp(24px, 7vw, 32px);line-height:1.22;
   color:var(--ivory);letter-spacing:.02em;
 }
 .sub{color:var(--muted-bright);font-size:var(--fs-lg);line-height:1.85;margin-top:14px}
