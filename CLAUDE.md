@@ -88,6 +88,22 @@ max-width:600 / 380 / 340     pointer:coarse     prefers-reduced-motion:reduce
 - `serverTimestamp()` 在伺服器回話之前是 null,本地那一筆會先以 null 出現。
   顯示時間一律走 `stamp()`,它會在那一瞬間顯示「剛剛」而不是 1970 年
 
+## 署名怎麼顯示
+- 家長那一筆顯示「**{孩子的名字}的家長**」,不要顯示 Google 帳號的顯示名稱。
+  老師的名冊上二十個家長各自叫什麼英文名字,對不上是哪個學生
+- 這個名字**每次重畫時從 `current.name` 現算**,不要寫進 entry 的資料裡。
+  寫死的話改了孩子的名字之後,以前的紀錄還掛著舊名字
+- 老師那一筆照舊顯示 `authorName`(老師只有一位,名字有意義)
+
+## 輸入框與縮放
+- **所有 input / textarea 的字級不得小於 16px**。iOS Safari 只要輸入框字級 < 16px,
+  點進去就會自動把整頁放大、版面跟著跳 —— 那才是「畫面亂跳」的真正原因。
+  用 `--fs-lg`(16px),不要用 `--fs-md`(14px)(踩過)
+- **不要加 `user-scalable=no` / `maximum-scale=1`**。家長要放大看樂譜照片、
+  年長的家人要放大看字;而且 iOS 從 10 開始根本不理這個設定,加了只是在
+  Android 上傷到需要的人。雙擊放大已經被 `touch-action:manipulation` 關掉了,
+  那個才是會誤觸的手勢,雙指縮放要留著
+
 ## 附件(錄音、照片、影片)
 - **兩條路,依大小分流,不要統一成一條**:錄音與照片壓完只有幾百 KB,以 base64 存進
   `students/{id}/media/{entryId}`(Firestore),不用物件儲存、不用綁卡;影片放不進
@@ -125,4 +141,5 @@ max-width:600 / 380 / 340     pointer:coarse     prefers-reduced-motion:reduce
 5. 老師切到「回一句」時上課日期欄要收起來,寫出來的是 reply 不是 lesson
 6. 名冊至少放三本、其中一本由家長寫最後一筆,確認它排在最前面且統計行算對
 7. 錄音、錄影、照片各送一次,確認時間軸的按鈕按得開;沒開 Storage 時影片要給人話
-8. CDN 連不上之後切一次語言,署名鈕必須還是停用的(`unavailable` 旗標,踩過)
+8. 改一次孩子的名字,確認舊紀錄的署名跟著改口
+9. CDN 連不上之後切一次語言,署名鈕必須還是停用的(`unavailable` 旗標,踩過)

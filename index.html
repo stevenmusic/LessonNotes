@@ -272,7 +272,10 @@ input[type="text"],input[type="date"],textarea{
   background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);
   padding:11px 13px;line-height:1.6;
 }
-textarea{min-height:96px;resize:vertical;font-size:var(--fs-md)}
+/* textarea 的字級不能小於 16px。iOS Safari 只要輸入框字級 < 16px,
+   點進去就會自動把整頁放大,版面跟著跳 —— 那才是「畫面亂跳」的真正原因,
+   不是使用者手殘去縮放。用 --fs-lg(16px) 就不會觸發,也不必剝奪雙指縮放 */
+textarea{min-height:96px;resize:vertical;font-size:var(--fs-lg);line-height:1.75}
 input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.14)}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .field-row{margin-bottom:16px}
@@ -773,7 +776,7 @@ const I18N = {
     emptyParent: "老師還沒寫下第一堂課。有話想先跟老師說，直接寫在下面就可以。",
     kindLesson: "課堂紀錄", kindReply: "家長寫的", kindTeacherReply: "老師回覆",
     rosterWaiting: "家長寫了一句 · {d}",
-    roleTeacher: "老師", roleParent: "家長",
+    roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長",
     signedAs: "目前署名", signOutText: "闔上簿本", teacherBadge: "老師",
     recStart: "錄一段", recVideo: "錄一段影片", recStop: "停下來",
     addPhoto: "加一張照片", attachRemove: "移除",
@@ -855,7 +858,7 @@ const I18N = {
     emptyParent: "The teacher hasn't written up a lesson yet. If there is something you want to say first, just write it below.",
     kindLesson: "Lesson note", kindReply: "From the family", kindTeacherReply: "Teacher's note",
     rosterWaiting: "The family wrote · {d}",
-    roleTeacher: "Teacher", roleParent: "Parent",
+    roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family",
     signedAs: "Signed in as", signOutText: "Close the notebook", teacherBadge: "Teacher",
     recStart: "Record", recVideo: "Record video", recStop: "Stop",
     addPhoto: "Add a photo", attachRemove: "Remove",
@@ -1184,7 +1187,13 @@ function renderTimeline(){
     : (en.authorRole === "teacher" ? t("kindTeacherReply") : t("kindReply"));
     const who = document.createElement("span");
     who.className = "who";
-    who.textContent = en.authorName || (en.authorRole === "teacher" ? t("roleTeacher") : t("roleParent"));
+    /* 家長那一筆顯示「{孩子}的家長」,不用 Google 帳號的顯示名稱 ——
+       老師的名冊上二十個家長各自叫什麼英文名字,對不上是哪個學生。
+       這裡刻意「每次重畫時現算」而不是寫進資料:改了孩子的名字之後,
+       以前的紀錄也要跟著改口,不能留著舊名字 */
+    who.textContent = en.authorRole === "teacher"
+      ? (en.authorName || t("roleTeacher"))
+      : t("parentOf", { name: (current && current.name) || t("roleParent") });
     const when = document.createElement("span");
     // 課堂紀錄顯示老師填的上課日期,回覆顯示寫下的時間
     when.textContent = en.kind === "lesson" && en.date ? fmtISO(en.date) : stamp(en.createdAt);
