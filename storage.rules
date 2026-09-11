@@ -1,0 +1,43 @@
+rules_version = '2';
+
+/*
+  影片的儲存規則。錄音與照片不走這裡 —— 它們小到直接存在 Firestore 的
+  students/{id}/media/{entryId},見 firestore.rules。
+
+  只有影片需要 Storage,而 Storage 從 2026-02-03 起需要 Blaze 方案。
+  沒開的話錄音與照片照常可用,只有錄影那一顆會說明原因。
+
+  這裡沒辦法像 Firestore 那樣用 get() 去查簿本的 parentUid,所以擋法比較粗:
+  登入的人才能讀寫,老師與檔案的建立者才能刪。要更嚴的話得把 studentId 與
+  parentUid 的對應搬進 custom claims,那是之後的事。
+*/
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isTeacher() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['sifan888494@gmail.com'];
+    }
+
+    match /students/{studentId}/{fileName} {
+      allow read: if signedIn();
+
+      // 一支影片最多 60 MB(60 秒 900kbps 大約 7 MB,留很多餘裕給高畫質裝置)
+      allow create: if signedIn()
+                    && request.resource.size < 60 * 1024 * 1024
+                    && request.resource.contentType.matches('video/.*');
+
+      allow update: if false;
+      allow delete: if isTeacher();
+    }
+
+    // 上面沒列到的路徑一律擋掉
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

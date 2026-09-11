@@ -88,6 +88,25 @@ max-width:600 / 380 / 340     pointer:coarse     prefers-reduced-motion:reduce
 - `serverTimestamp()` 在伺服器回話之前是 null,本地那一筆會先以 null 出現。
   顯示時間一律走 `stamp()`,它會在那一瞬間顯示「剛剛」而不是 1970 年
 
+## 附件(錄音、照片、影片)
+- **兩條路,依大小分流,不要統一成一條**:錄音與照片壓完只有幾百 KB,以 base64 存進
+  `students/{id}/media/{entryId}`(Firestore),不用物件儲存、不用綁卡;影片放不進
+  1 MiB 的文件上限,只能走 Firebase Storage(需要 Blaze)
+- 位元組**一定要跟 entries 分開放**。時間軸一次讀 50 筆,位元組混在裡面的話光是
+  捲動簿本就會拉下幾十 MB。時間軸只放一顆按鈕,按了才讀那一筆
+- `INLINE_MAX` 是 650000 —— base64 之後約 867 KB,離 1 MiB 還有餘裕給其他欄位。
+  規則那邊也擋 `data.size() <= 900000`,兩邊要一起改
+- 照片一定要在瀏覽器裡先縮(`shrinkPhoto`,長邊 1280 / JPEG 0.75)。手機直出 4 MB,
+  不縮的話一張就爆掉
+- 錄音上限 90 秒、錄影 60 秒,到點自動停 —— 不要靠使用者盯著計時器
+- `navigator.mediaDevices` 只在**安全來源**才存在。整個不在的時候是 `errNoRec`
+  (這個瀏覽器不能錄音),不是 `errMic`(請允許麥克風)—— 叫人去允許一個不存在的
+  權限只會讓他找不到那個設定。線上是 GitHub Pages(HTTPS)沒問題,本機測試要用 HTTPS
+- 附件失敗時**不要把已經寫好的那筆 entry 刪掉**。先寫 entry 拿到 id,附件再掛上去;
+  附件掛失敗至少文字還在
+- 只錄一段不打字也要送得出去。規則要求 `body` 不能是空字串,所以純附件時前端拿
+  附件種類當 body
+
 ## 設定與部署
 - `firebaseConfig` 六個欄位只要有一個是 `PASTE_HERE`,整頁換成「簿本還沒裝訂完成」,
   連 Firebase 都不初始化
@@ -105,4 +124,5 @@ max-width:600 / 380 / 340     pointer:coarse     prefers-reduced-motion:reduce
 4. 家長與老師各跑一遍:家長不能有「上課日期」欄位、「二選一」與「回到名冊」,老師要有
 5. 老師切到「回一句」時上課日期欄要收起來,寫出來的是 reply 不是 lesson
 6. 名冊至少放三本、其中一本由家長寫最後一筆,確認它排在最前面且統計行算對
-7. CDN 連不上之後切一次語言,署名鈕必須還是停用的(`unavailable` 旗標,踩過)
+7. 錄音、錄影、照片各送一次,確認時間軸的按鈕按得開;沒開 Storage 時影片要給人話
+8. CDN 連不上之後切一次語言,署名鈕必須還是停用的(`unavailable` 旗標,踩過)

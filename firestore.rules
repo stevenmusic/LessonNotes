@@ -62,6 +62,21 @@ service cloud.firestore {
         // 自己寫的才改得動、刪得掉
         allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
       }
+
+      /* 錄音與照片的位元組。刻意跟 entries 分開放:時間軸一次讀 50 筆,
+         如果位元組跟文字放在同一筆,光是捲動簿本就會把好幾十 MB 拉下來。
+         分開之後,只有真的按下播放/看照片時才讀那一筆。
+         文件 id 就是對應的 entry id。 */
+      match /media/{mediaId} {
+        allow read:   if isTeacher() || isMyStudent(studentId);
+        allow create: if (isTeacher() || isMyStudent(studentId))
+                      && request.resource.data.authorUid == request.auth.uid
+                      && request.resource.data.data is string
+                      // Firestore 單筆上限 1 MiB,留一點給其他欄位
+                      && request.resource.data.data.size() <= 900000;
+        allow update: if false;   // 附件不給改,要換就刪掉重寫一筆
+        allow delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+      }
     }
 
     // 上面沒列到的一律擋掉
