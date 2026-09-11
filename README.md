@@ -16,17 +16,22 @@
 
 ## 設定
 
-`index.html` 裡的 `firebaseConfig` 六個欄位預設是 `PASTE_HERE`。
-沒填完的時候整頁會換成「簿本還沒裝訂完成」,連 Firebase 都不會初始化 ——
-與其讓使用者按下去收到 `auth/invalid-api-key`,不如直接說還沒設定好。
+`index.html` 裡的 `firebaseConfig` 已經填好,接的是 Firebase 專案
+`lesson-notes-198e0`。要換專案就換那六個值。
 
-1. Firebase 主控台建一個專案,加一個 Web App,把它給的六個值貼進 `firebaseConfig`
+六個欄位只要有一個還是 `PASTE_HERE`,整頁會換成「簿本還沒裝訂完成」,
+連 Firebase 都不會初始化 —— 與其讓使用者按下去收到 `auth/invalid-api-key`,
+不如直接說還沒設定好。
+
+換專案或重建時要記得的三件事:
+
+1. Firebase 主控台 → 專案設定 → 你的應用程式(Web),把六個值貼進 `firebaseConfig`
 2. Authentication → Sign-in method → 開啟 **Google**
 3. Authentication → Settings → Authorized domains 加入 `stevenmusic.github.io`
    (本機測試再加 `localhost`)
 
-`apiKey` 放在前端是 Firebase 的正常用法,它不是密鑰,擋門的是上面第 3 步的網域清單
-與之後的安全規則。
+`apiKey` 放在前端是 Firebase 的正常用法,它不是密鑰 —— 部署出去的網頁原始碼裡
+本來就看得到。擋門的是上面第 3 步的網域清單與之後的安全規則。
 
 ## 技術
 
