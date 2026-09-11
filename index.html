@@ -278,6 +278,21 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .field-row{margin-bottom:16px}
 .form-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
 
+/* 老師要寫的是課堂紀錄還是單純回一句 —— 兩顆一組的切換鈕。
+   做成一整條膠囊而不是兩顆獨立按鈕,才看得出是「二選一」 */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius-pill);padding:3px;gap:3px}
+.seg button{
+  border:0;background:transparent;color:var(--muted-bright);
+  font-family:inherit;font-size:var(--fs-sm);line-height:1;
+  padding:8px 15px;border-radius:var(--radius-pill);cursor:pointer;white-space:nowrap;
+}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--bg);font-weight:700}
+.seg button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:1px}
+@media (pointer:coarse){ .seg button{padding:11px 16px} }
+
+/* 名冊上「家長寫了但還沒回」的那一本要看得出來,不然訊息等於石沉大海 */
+.roster-item .nm span.waiting{color:var(--gold);font-weight:500}
+
 /* ── 誰署名了 + 闔上簿本 ───────────────────────── */
 .who-bar{
   display:flex;flex-wrap:wrap;align-items:center;gap:10px;
@@ -571,6 +586,12 @@ footer{
         <h3 id="composerTitle">寫下這堂課</h3>
       </div>
       <div class="sheet-body">
+        <div class="field-row" id="kindRow" hidden>
+          <div class="seg" id="kindSeg" role="group">
+            <button type="button" data-kind="lesson" aria-pressed="true" data-i18n="segLesson">課堂紀錄</button>
+            <button type="button" data-kind="reply" aria-pressed="false" data-i18n="segReply">回一句</button>
+          </div>
+        </div>
         <div class="field-row" id="dateRow" hidden>
           <label class="lbl" for="dateInput" data-i18n="lessonDateLabel">上課日期</label>
           <input type="date" id="dateInput">
@@ -662,15 +683,19 @@ const I18N = {
     backToRoster: "回到名冊",
     lessonDateLabel: "上課日期",
     composerTeacher: "寫下這堂課",
-    composerParent: "回一句給老師",
+    composerTeacherReply: "回一句給家長",
+    composerParent: "寫給老師",
+    segLesson: "課堂紀錄", segReply: "回一句",
     lessonPlaceholder: "這堂課練了什麼、進度到哪一小節、下週要帶的譜…",
     replyPlaceholder: "家裡練得怎麼樣？有什麼想問老師的？",
+    teacherReplyPlaceholder: "想跟家長說的話…",
     sendTeacher: "寫進簿本",
     sendParent: "寫上去",
     sending: "正在寫入…",
     emptyTeacher: "這一頁還是空白的。寫下第一堂課吧。",
-    emptyParent: "老師還沒寫下第一堂課。",
-    kindLesson: "課堂紀錄", kindReply: "回覆",
+    emptyParent: "老師還沒寫下第一堂課。有話想先跟老師說，直接寫在下面就可以。",
+    kindLesson: "課堂紀錄", kindReply: "家長寫的", kindTeacherReply: "老師回覆",
+    rosterWaiting: "家長寫了一句 · {d}",
     roleTeacher: "老師", roleParent: "家長",
     signedAs: "目前署名", signOutText: "闔上簿本", teacherBadge: "老師",
     justNow: "剛剛",
@@ -725,15 +750,19 @@ const I18N = {
     backToRoster: "Back to the register",
     lessonDateLabel: "Lesson date",
     composerTeacher: "Write up this lesson",
-    composerParent: "Write back to the teacher",
+    composerTeacherReply: "Write back to the family",
+    composerParent: "Write to the teacher",
+    segLesson: "Lesson note", segReply: "Just a note",
     lessonPlaceholder: "What the lesson covered, which bar the piece reached, what to bring next week…",
     replyPlaceholder: "How did practice go at home? Anything to ask the teacher?",
+    teacherReplyPlaceholder: "Anything you want to tell the family…",
     sendTeacher: "Write it in",
     sendParent: "Write it in",
     sending: "Writing…",
     emptyTeacher: "This page is still blank. Write up the first lesson.",
-    emptyParent: "The teacher hasn't written up a lesson yet.",
-    kindLesson: "Lesson note", kindReply: "Reply",
+    emptyParent: "The teacher hasn't written up a lesson yet. If there is something you want to say first, just write it below.",
+    kindLesson: "Lesson note", kindReply: "From the family", kindTeacherReply: "Teacher's note",
+    rosterWaiting: "The family wrote · {d}",
     roleTeacher: "Teacher", roleParent: "Parent",
     signedAs: "Signed in as", signOutText: "Close the notebook", teacherBadge: "Teacher",
     justNow: "just now",
@@ -855,6 +884,8 @@ let current = null;         // 目前打開的那本簿子
 let entries = [];           // current 的紀錄
 let stopEntries = null;     // onSnapshot 的取消函式
 let stopStudents = null;
+/* 老師這一次要寫的是課堂紀錄還是單純回一句。家長永遠是 reply,沒有這個選擇 */
+let teacherKind = "lesson";
 
 function isTeacherUser(u){
   const mail = (u && u.email || "").toLowerCase();
@@ -958,10 +989,14 @@ function renderRoster(){
     const sub = document.createElement("span");
     const bits = [];
     if (st.slot) bits.push(st.slot);
-    bits.push(st.lastEntryAt && st.lastEntryAt.toDate
-      ? t("rosterLast", { d: fmtDate(st.lastEntryAt.toDate()) })
-      : t("rosterNever"));
+    const when = st.lastEntryAt && st.lastEntryAt.toDate ? fmtDate(st.lastEntryAt.toDate()) : null;
+    /* 最後一筆是家長寫的 = 還沒回。這一本要看得出來,不然家長寫了訊息、老師沒翻開
+       那一本,就等於石沉大海 */
+    const waiting = when && st.lastEntryBy === "parent";
+    bits.push(waiting ? t("rosterWaiting", { d: when })
+      : (when ? t("rosterLast", { d: when }) : t("rosterNever")));
     sub.textContent = bits.join(" · ");
+    if (waiting) sub.className = "waiting";
     nm.append(strong, sub);
 
     const arw = document.createElement("span");
@@ -991,9 +1026,16 @@ function renderComposer(){
   const box = $("composer");
   if (!current) { box.hidden = true; return; }
   box.hidden = false;
-  $("composerTitle").textContent = amTeacher ? t("composerTeacher") : t("composerParent");
-  $("dateRow").hidden = !amTeacher;           // 上課日期只有老師填
-  $("bodyInput").placeholder = amTeacher ? t("lessonPlaceholder") : t("replyPlaceholder");
+  const lesson = amTeacher && teacherKind === "lesson";
+  $("composerTitle").textContent = !amTeacher ? t("composerParent")
+    : (lesson ? t("composerTeacher") : t("composerTeacherReply"));
+  $("kindRow").hidden = !amTeacher;           // 二選一只有老師需要
+  $("dateRow").hidden = !lesson;              // 上課日期只有課堂紀錄要填
+  $("bodyInput").placeholder = !amTeacher ? t("replyPlaceholder")
+    : (lesson ? t("lessonPlaceholder") : t("teacherReplyPlaceholder"));
+  document.querySelectorAll("#kindSeg button").forEach(b => {
+    b.setAttribute("aria-pressed", String(b.dataset.kind === teacherKind));
+  });
   const btn = $("sendBtn");
   if (!btn.dataset.busy) btn.textContent = amTeacher ? t("sendTeacher") : t("sendParent");
 }
@@ -1018,7 +1060,8 @@ function renderTimeline(){
     head.className = "entry-head";
     const kind = document.createElement("span");
     kind.className = "kind";
-    kind.textContent = en.kind === "lesson" ? t("kindLesson") : t("kindReply");
+    kind.textContent = en.kind === "lesson" ? t("kindLesson")
+    : (en.authorRole === "teacher" ? t("kindTeacherReply") : t("kindReply"));
     const who = document.createElement("span");
     who.className = "who";
     who.textContent = en.authorName || (en.authorRole === "teacher" ? t("roleTeacher") : t("roleParent"));
@@ -1122,7 +1165,7 @@ async function createStudent(name, slot){
 
 async function addEntry(text){
   const { collection, addDoc, doc, updateDoc, serverTimestamp } = fb;
-  const kind = amTeacher ? "lesson" : "reply";
+  const kind = amTeacher ? teacherKind : "reply";
   const payload = {
     kind: kind,
     body: text,
@@ -1137,7 +1180,10 @@ async function addEntry(text){
   /* 名冊要看得到「最後一筆是什麼時候」,不然老師得一本一本點進去才知道誰還沒寫。
      這一筆失敗不影響剛寫進去的紀錄,所以吞掉不吵使用者 */
   try {
-    await updateDoc(doc(db, "students", current.id), { lastEntryAt: serverTimestamp() });
+    await updateDoc(doc(db, "students", current.id), {
+      lastEntryAt: serverTimestamp(),
+      lastEntryBy: amTeacher ? "teacher" : "parent",
+    });
   } catch (e) { console.warn("lastEntryAt:", e && e.code); }
 }
 
@@ -1216,6 +1262,10 @@ $("sendBtn").onclick = async () => {
     btn.textContent = amTeacher ? t("sendTeacher") : t("sendParent");
   }
 };
+
+document.querySelectorAll("#kindSeg button").forEach(b => {
+  b.onclick = () => { teacherKind = b.dataset.kind; renderComposer(); };
+});
 
 $("backBtn").onclick = () => {
   if (stopEntries) { stopEntries(); stopEntries = null; }
