@@ -1,0 +1,41 @@
+# GitHub Pages 部署。
+#
+# 這個 repo 是純靜態單檔網站,不需要建置 —— 照理說 Pages 的
+# 「Deploy from a branch」就夠了。加這個檔案是因為 Settings → Pages 的
+# Source 若設成「GitHub Actions」,推 main 就不會再自動建置,而 repo 裡
+# 沒有 workflow 的話等於完全不部署,線上會停在最後一次成功的建置上
+# (踩過:填入 firebaseConfig 的 commit 推上去之後線上毫無變化)。
+#
+# 兩種設定都能動:Source 選 GitHub Actions 時由這個 workflow 部署;
+# 選 Deploy from a branch 時 Pages 自己會建置,這個 workflow 會失敗但不影響網站。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:      # 需要時可以在 Actions 頁面手動重跑
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一個部署,但不取消進行中的那個 —— 取消到一半會留下半套的網站
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .        # 單檔網站,整個 repo 根目錄就是網站本身
+      - id: deployment
+        uses: actions/deploy-pages@v4
