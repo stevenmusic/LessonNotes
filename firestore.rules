@@ -59,8 +59,25 @@ service cloud.firestore {
                       && request.resource.data.body.size() <= 2000
                       && (request.resource.data.kind == 'reply' || isTeacher());
 
-        // 自己寫的才改得動、刪得掉
-        allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+        /* 改寫:自己寫的那一筆,而且不能把作者或種類換掉 ——
+           不然家長可以把自己的回覆改成「課堂紀錄」 */
+        allow update: if signedIn()
+                      && resource.data.authorUid == request.auth.uid
+                      && request.resource.data.authorUid == resource.data.authorUid
+                      && request.resource.data.kind == resource.data.kind
+                      && request.resource.data.body is string
+                      && request.resource.data.body.size() > 0
+                      && request.resource.data.body.size() <= 2000;
+
+        /* 打勾:作業是老師出的,但打勾的是家長,所以家長要改得動老師那一筆。
+           用 affectedKeys().hasOnly(['tasks']) 把範圍鎖死在 tasks 這一個欄位 ——
+           其他任何欄位一起被改的話這條就不成立,課文改不掉、作者也換不了 */
+        allow update: if (isTeacher() || isMyStudent(studentId))
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tasks']);
+
+        /* 刪除:自己寫的,或老師。老師要刪得掉家長那幾筆,
+           不然整本簿子(含測試用的)永遠刪不乾淨 */
+        allow delete: if isTeacher() || (signedIn() && resource.data.authorUid == request.auth.uid);
       }
 
       /* 錄音與照片的位元組。刻意跟 entries 分開放:時間軸一次讀 50 筆,
@@ -75,7 +92,8 @@ service cloud.firestore {
                       // Firestore 單筆上限 1 MiB,留一點給其他欄位
                       && request.resource.data.data.size() <= 900000;
         allow update: if false;   // 附件不給改,要換就刪掉重寫一筆
-        allow delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+        // 刪掉紀錄時附件要一起收掉,所以老師也要刪得動
+        allow delete: if isTeacher() || (signedIn() && resource.data.authorUid == request.auth.uid);
       }
     }
 

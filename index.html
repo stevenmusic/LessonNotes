@@ -293,6 +293,42 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .seg button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:1px}
 @media (pointer:coarse){ .seg button{padding:11px 16px} }
 
+/* ── 一筆紀錄上的「改 / 刪」───────────────────────── */
+.entry-acts{display:flex;gap:2px;margin-left:auto}
+.entry-acts button{
+  background:none;border:0;padding:4px 7px;cursor:pointer;
+  font-family:inherit;font-size:var(--fs-xs);color:var(--muted);border-radius:5px;
+}
+.entry-acts button:hover,.entry-acts button:focus-visible{color:var(--gold-bright);outline:none}
+.entry-acts .danger:hover,.entry-acts .danger:focus-visible{color:var(--danger)}
+.entry-edit{display:grid;gap:8px}
+.entry-edit textarea{min-height:80px}
+.entry-edit .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (pointer:coarse){ .entry-acts button{padding:8px 10px} }
+
+/* ── 作業清單 ───────────────────────── */
+.tasks{list-style:none;display:grid;gap:2px;margin-top:12px}
+.tasks li{margin:0}
+.tasks label{
+  display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+  padding:7px 8px;border-radius:var(--radius-sm);line-height:1.7;
+  font-size:var(--fs-md);color:var(--ivory);
+}
+.tasks label:hover{background:var(--panel-2)}
+.tasks input[type="checkbox"]{
+  width:20px;height:20px;flex:none;margin-top:.15em;accent-color:var(--gold);cursor:pointer;
+}
+.tasks .done{color:var(--muted);text-decoration:line-through}
+.tasks-head{
+  display:flex;align-items:baseline;gap:8px;margin-top:14px;
+  font-size:var(--fs-xs);color:var(--gold);letter-spacing:.08em;
+}
+.tasks-head .count{color:var(--muted);letter-spacing:0}
+@media (pointer:coarse){ .tasks label{padding:10px 8px} }
+
+/* 名冊上的作業進度 */
+.roster-item .nm span.tasks-left{color:var(--gold)}
+
 /* ── 附件:錄音與照片 ───────────────────────── */
 .attach-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .attach-row .btn svg{width:15px;height:15px}
@@ -581,6 +617,9 @@ footer{
     <div class="rule"></div>
     <div class="roster" id="roster"></div>
     <div class="empty" id="rosterEmpty" hidden data-i18n="rosterEmpty">還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。</div>
+    <div class="form-actions" id="addKidRow" hidden style="margin-top:16px">
+      <button class="btn" type="button" id="addKidBtn" data-i18n="addKid">加一個孩子</button>
+    </div>
   </section>
 
   <!-- ══ 某一本簿子:課堂紀錄 + 回覆 ══ -->
@@ -611,6 +650,8 @@ footer{
           <div class="form-actions">
             <button class="btn primary" type="submit" id="renameSaveBtn" data-i18n="saveName">存起來</button>
             <button class="btn ghost" type="button" id="renameCancelBtn" data-i18n="cancel">取消</button>
+            <span style="flex:1"></span>
+            <button class="btn ghost" type="button" id="dropBookBtn" hidden data-i18n="dropBook">刪掉這本簿子</button>
           </div>
         </form>
         <div class="slip warn" id="renameErr" hidden>
@@ -643,6 +684,12 @@ footer{
         </div>
         <div class="field-row">
           <textarea id="bodyInput" maxlength="2000"></textarea>
+        </div>
+        <div class="field-row" id="taskRow" hidden>
+          <label class="lbl" for="taskInput" data-i18n="taskLabel">這週要練的（一行一項，可以不填）</label>
+          <textarea id="taskInput" maxlength="1000"
+                    data-i18n-attr="placeholder:taskPlaceholder"
+                    placeholder="小奏鳴曲 第一樂章 1–32 小節&#10;哈農 No.3　每天兩次&#10;C 大調音階 四個八度"></textarea>
         </div>
         <div class="attach-row" id="attachRow">
           <button class="btn small" type="button" id="recBtn">
@@ -778,6 +825,14 @@ const I18N = {
     rosterWaiting: "家長寫了一句 · {d}",
     roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長",
     signedAs: "目前署名", signOutText: "闔上簿本", teacherBadge: "老師",
+    editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
+    taskLabel: "這週要練的（一行一項，可以不填）",
+    taskPlaceholder: "小奏鳴曲 第一樂章 1–32 小節\n哈農 No.3　每天兩次\nC 大調音階 四個八度",
+    tasksTitle: "這週要練的", tasksCount: "{d} / {n}", tasksAllDone: "全部練完了",
+    rosterTasks: "作業 {d}/{n}",
+    myKids: "我的孩子", addKid: "加一個孩子",
+    dropBook: "刪掉這本簿子", dropBookConfirm: "整本刪掉？裡面的紀錄與錄音都會不見。",
+    errDel: "刪不掉。重新整理這一頁再試一次。",
     recStart: "錄一段", recVideo: "錄一段影片", recStop: "停下來",
     addPhoto: "加一張照片", attachRemove: "移除",
     videoReady: "影片 {d}", playVideo: "看這段影片 · {d}", uploading: "正在送出… {p}%",
@@ -860,6 +915,14 @@ const I18N = {
     rosterWaiting: "The family wrote · {d}",
     roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family",
     signedAs: "Signed in as", signOutText: "Close the notebook", teacherBadge: "Teacher",
+    editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
+    taskLabel: "To practise this week (one per line, optional)",
+    taskPlaceholder: "Sonatina, 1st mvt, bars 1\u201332\nHanon No.3, twice a day\nC major scale, four octaves",
+    tasksTitle: "To practise this week", tasksCount: "{d} / {n}", tasksAllDone: "All done",
+    rosterTasks: "Practice {d}/{n}",
+    myKids: "My children", addKid: "Add a child",
+    dropBook: "Delete this notebook", dropBookConfirm: "Delete the whole notebook? Every entry and recording goes with it.",
+    errDel: "Couldn't delete it. Reload the page and try again.",
     recStart: "Record", recVideo: "Record video", recStop: "Stop",
     addPhoto: "Add a photo", attachRemove: "Remove",
     videoReady: "Video {d}", playVideo: "Play this video · {d}", uploading: "Sending… {p}%",
@@ -995,6 +1058,9 @@ let stopEntries = null;     // onSnapshot 的取消函式
 let stopStudents = null;
 /* 老師這一次要寫的是課堂紀錄還是單純回一句。家長永遠是 reply,沒有這個選擇 */
 let teacherKind = "lesson";
+let editingId = null;     // 正在改寫的那一筆
+let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
+let addingKid = false;    // 家長正在加第二個孩子
 
 function isTeacherUser(u){
   const mail = (u && u.email || "").toLowerCase();
@@ -1102,6 +1168,9 @@ function renderRoster(){
   $("rosterCount").textContent = !list.length ? ""
     : (waiting ? t("rosterWaitingCount", { n: list.length, k: waiting })
                : t("rosterCount", { n: list.length }));
+  // 家長只有在不只一個孩子時才會看到這一頁,標題與按鈕都要換成家長的說法
+  document.querySelector('#viewRoster h2').textContent = amTeacher ? t("rosterTitle") : t("myKids");
+  $("addKidRow").hidden = amTeacher;
 
   list.forEach(st => {
     const b = document.createElement("button");
@@ -1118,8 +1187,12 @@ function renderRoster(){
     const wait = isWaiting(st);
     bits.push(wait ? t("rosterWaiting", { d: when })
       : (when ? t("rosterLast", { d: when }) : t("rosterNever")));
+    // 最新一次作業的進度,不用點進去就看得到誰還沒練完
+    const lt = st.lastTasks;
+    if (lt && lt.n) bits.push(t("rosterTasks", { d: lt.d, n: lt.n }));
     sub.textContent = bits.join(" · ");
     if (wait) sub.className = "waiting";
+    else if (lt && lt.n && lt.d < lt.n) sub.className = "tasks-left";
     nm.append(strong, sub);
 
     const arw = document.createElement("span");
@@ -1141,8 +1214,8 @@ function renderNotebookHead(){
   const slot = $("nbSlot");
   slot.textContent = current.slot || "";
   slot.hidden = !current.slot;
-  // 老師是從名冊點進來的,要有路回去;家長只有自己那一本,沒有名冊可回
-  $("backBtn").hidden = !amTeacher;
+  // 老師一律從名冊進來;家長只有在不只一個孩子時才有清單可回
+  $("backBtn").hidden = !(amTeacher || students.length > 1);
 }
 
 function renderComposer(){
@@ -1154,6 +1227,7 @@ function renderComposer(){
     : (lesson ? t("composerTeacher") : t("composerTeacherReply"));
   $("kindRow").hidden = !amTeacher;           // 二選一只有老師需要
   $("dateRow").hidden = !lesson;              // 上課日期只有課堂紀錄要填
+  $("taskRow").hidden = !lesson;              // 作業也是
   $("bodyInput").placeholder = !amTeacher ? t("replyPlaceholder")
     : (lesson ? t("lessonPlaceholder") : t("teacherReplyPlaceholder"));
   document.querySelectorAll("#kindSeg button").forEach(b => {
@@ -1199,13 +1273,51 @@ function renderTimeline(){
     when.textContent = en.kind === "lesson" && en.date ? fmtISO(en.date) : stamp(en.createdAt);
     head.append(kind, who, when);
 
-    const body = document.createElement("div");
-    body.className = "entry-body";
-    body.textContent = en.body || "";
+    /* 改與刪:自己寫的那一筆才改得動;老師連家長那筆也刪得掉,
+       否則整本簿子(含測試用的)永遠刪不乾淨 */
+    const mine = me && en.authorUid === me.uid;
+    if (mine || amTeacher) {
+      const acts = document.createElement("span");
+      acts.className = "entry-acts";
+      if (confirmDelId === en.id) {
+        const q = document.createElement("span");
+        q.textContent = t("delConfirm");
+        const yes = document.createElement("button");
+        yes.type = "button"; yes.className = "danger"; yes.textContent = t("delYes");
+        yes.onclick = () => removeEntry(en);
+        const no = document.createElement("button");
+        no.type = "button"; no.textContent = t("cancel");
+        no.onclick = () => { confirmDelId = null; renderTimeline(); };
+        acts.append(q, yes, no);
+      } else {
+        if (mine) {
+          const ed = document.createElement("button");
+          ed.type = "button"; ed.textContent = t("editEntry");
+          ed.onclick = () => { editingId = en.id; confirmDelId = null; renderTimeline(); };
+          acts.appendChild(ed);
+        }
+        const del = document.createElement("button");
+        del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
+        del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
+        acts.appendChild(del);
+      }
+      head.appendChild(acts);
+    }
 
-    art.append(head, body);
-    const att = attachNode(en, current.id);
-    if (att) art.appendChild(att);
+    art.appendChild(head);
+
+    if (editingId === en.id) {
+      art.appendChild(editBox(en));
+    } else {
+      const body = document.createElement("div");
+      body.className = "entry-body";
+      body.textContent = en.body || "";
+      art.appendChild(body);
+      const tk = tasksNode(en);
+      if (tk) art.appendChild(tk);
+      const att = attachNode(en, current.id);
+      if (att) art.appendChild(att);
+    }
     box.appendChild(art);
   });
 }
@@ -1233,10 +1345,15 @@ function watchStudents(){
   stopStudents = onSnapshot(q, snap => {
     students = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
     if (!amTeacher) {
-      // 家長:沒有簿子就先去取名字,有就直接翻開
+      // 家長:沒有簿子就先去取名字
       if (!students.length) { current = null; show("naming"); return; }
       const keep = current && students.find(x => x.id === current.id);
-      openNotebook((keep || students[0]).id);
+      if (keep) { current = keep; renderNotebookHead(); renderRoster(); return; }
+      /* 只有一個孩子就直接翻開那一本(最常見);不只一個才給清單,
+         省掉單一孩子的家長每次都要多點一下 */
+      if (students.length === 1 && !addingKid) { openNotebook(students[0].id); return; }
+      renderRoster();
+      if (!addingKid) show("roster");
       return;
     }
     // 老師:目前正看著某一本的話,順手把抬頭更新(例如家長剛改了名字)
@@ -1260,6 +1377,7 @@ function openNotebook(id){
   if (!st) return;
   current = st;
   entries = [];
+  editingId = null; confirmDelId = null;
   renderNotebookHead();
   renderComposer();
   renderTimeline();
@@ -1301,7 +1419,8 @@ async function addEntry(text){
     kind: kind,
     /* 規則要求 body 不能是空字串(擋空白紀錄)。只錄一段不打字時,
        用附件的種類當內容,家長不必為了送出硬打一個字 */
-    body: text || (pending ? t(pending.kind === "photo" ? "photoReady"
+    body: text || (parseTasks($("taskInput").value).length && amTeacher && teacherKind === "lesson" ? t("tasksTitle") : "")
+          || (pending ? t(pending.kind === "photo" ? "photoReady"
                    : pending.kind === "video" ? "videoReady" : "recReady",
                    { d: fmtDur(pending.dur || 0) }) : ""),
     authorUid: me.uid,
@@ -1309,7 +1428,11 @@ async function addEntry(text){
     authorRole: amTeacher ? "teacher" : "parent",
     createdAt: serverTimestamp(),
   };
-  if (kind === "lesson") payload.date = $("dateInput").value || todayISO();
+  if (kind === "lesson") {
+    payload.date = $("dateInput").value || todayISO();
+    const tk = parseTasks($("taskInput").value);
+    if (tk.length) payload.tasks = tk;
+  }
 
   /* 先把 entry 寫出來拿到 id,附件才知道要掛在哪一筆。附件失敗的話把那筆
      entry 留著(文字還在),只是沒有附件 —— 不要因為附件失敗就把寫好的字丟掉 */
@@ -1326,6 +1449,167 @@ async function addEntry(text){
       lastEntryBy: amTeacher ? "teacher" : "parent",
     });
   } catch (e) { console.warn("lastEntryAt:", e && e.code); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6b. 作業清單
+   ──────────────────────────────────────────────────────────────
+   老師在課堂紀錄裡一行寫一項,家長打勾。打勾寫回老師那一筆的 tasks 欄位 ——
+   規則用 affectedKeys().hasOnly(['tasks']) 把家長能碰的範圍鎖死在這一欄。
+   ══════════════════════════════════════════════════════════════ */
+function parseTasks(text){
+  return String(text || "").split("\n")
+    .map(x => x.trim()).filter(Boolean).slice(0, 20)
+    .map(x => ({ t: x.slice(0, 120), d: false }));
+}
+/* 名冊上要看得到「最新一次作業練完幾項」。找最後一筆有作業的課堂紀錄來算 */
+function latestTasks(){
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const en = entries[i];
+    if (en.kind === "lesson" && Array.isArray(en.tasks) && en.tasks.length) {
+      return { d: en.tasks.filter(x => x.d).length, n: en.tasks.length };
+    }
+  }
+  return null;
+}
+async function syncLastTasks(){
+  const lt = latestTasks();
+  if (!current) return;
+  try {
+    await fb.updateDoc(fb.doc(db, "students", current.id), { lastTasks: lt || null });
+  } catch (e) { console.warn("lastTasks:", e && e.code); }
+}
+
+function tasksNode(en){
+  if (!Array.isArray(en.tasks) || !en.tasks.length) return null;
+  const wrap = document.createElement("div");
+  const head = document.createElement("div");
+  head.className = "tasks-head";
+  const ttl = document.createElement("span");
+  ttl.textContent = t("tasksTitle");
+  const cnt = document.createElement("span");
+  cnt.className = "count";
+  const done = en.tasks.filter(x => x.d).length;
+  cnt.textContent = done === en.tasks.length ? t("tasksAllDone") : t("tasksCount", { d: done, n: en.tasks.length });
+  head.append(ttl, cnt);
+
+  const ul = document.createElement("ul");
+  ul.className = "tasks";
+  en.tasks.forEach((task, i) => {
+    const li = document.createElement("li");
+    const lab = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!task.d;
+    const sp = document.createElement("span");
+    sp.textContent = task.t;
+    if (task.d) sp.className = "done";
+    cb.onchange = async () => {
+      cb.disabled = true;
+      const next = en.tasks.map((x, j) => j === i ? { t: x.t, d: cb.checked } : { t: x.t, d: !!x.d });
+      try {
+        await fb.updateDoc(fb.doc(db, "students", current.id, "entries", en.id), { tasks: next });
+        en.tasks = next;                 // onSnapshot 會再蓋一次,先更新讓畫面立刻有反應
+        await syncLastTasks();
+      } catch (e) {
+        console.warn("tick:", e && e.code, e && e.message);
+        cb.checked = !cb.checked;
+        slipMsg("sendErr", "sendErrText", dbErrKey(e));
+      } finally { cb.disabled = false; }
+    };
+    lab.append(cb, sp);
+    li.appendChild(lab);
+    ul.appendChild(li);
+  });
+  wrap.append(head, ul);
+  return wrap;
+}
+
+/* 改寫一筆紀錄。附件不給改 —— 要換附件就刪掉重寫一筆,
+   免得畫面上那段錄音跟文字對不起來 */
+function editBox(en){
+  const wrap = document.createElement("div");
+  wrap.className = "entry-edit";
+  const ta = document.createElement("textarea");
+  ta.value = en.body || "";
+  ta.maxLength = 2000;
+
+  let dateIn = null;
+  if (en.kind === "lesson") {
+    dateIn = document.createElement("input");
+    dateIn.type = "date";
+    dateIn.value = en.date || todayISO();
+  }
+  let taskIn = null;
+  if (en.kind === "lesson" && amTeacher) {
+    taskIn = document.createElement("textarea");
+    taskIn.placeholder = t("taskPlaceholder");
+    taskIn.value = (en.tasks || []).map(x => x.t).join("\n");
+  }
+
+  const row = document.createElement("div");
+  row.className = "row";
+  const save = document.createElement("button");
+  save.className = "btn primary small"; save.type = "button"; save.textContent = t("saveEntry");
+  const cancel = document.createElement("button");
+  cancel.className = "btn ghost small"; cancel.type = "button"; cancel.textContent = t("cancel");
+  cancel.onclick = () => { editingId = null; renderTimeline(); };
+
+  save.onclick = async () => {
+    const body = ta.value.trim();
+    if (!body) { ta.focus(); return; }
+    save.disabled = true;
+    const patch = { body: body };
+    if (dateIn) patch.date = dateIn.value || en.date || todayISO();
+    /* 作業改了就整串換掉。已經打勾的項目如果文字沒變就保留勾勾,
+       不然老師調一個錯字,家長整週的進度就歸零了 */
+    if (taskIn) {
+      const old = en.tasks || [];
+      patch.tasks = parseTasks(taskIn.value).map(x => {
+        const hit = old.find(o => o.t === x.t);
+        return { t: x.t, d: hit ? !!hit.d : false };
+      });
+    }
+    /* editingId 要在 await 之前就清掉。Firestore 有本地的樂觀更新,
+       updateDoc 還沒回來 onSnapshot 就先重畫一次了 —— 那時候 editingId 還在的話,
+       表單會留在畫面上,看起來像沒存進去(踩過) */
+    editingId = null;
+    try {
+      await fb.updateDoc(fb.doc(db, "students", current.id, "entries", en.id), patch);
+      if (patch.tasks) { en.tasks = patch.tasks; await syncLastTasks(); }
+    } catch (e) {
+      console.warn("editEntry:", e && e.code, e && e.message);
+      editingId = en.id;          // 存失敗就把表單留著,不要讓人重打一次
+      slipMsg("sendErr", "sendErrText", dbErrKey(e));
+    } finally { save.disabled = false; renderTimeline(); }
+  };
+
+  row.append(save, cancel);
+  if (dateIn) wrap.appendChild(dateIn);
+  wrap.appendChild(ta);
+  if (taskIn) wrap.appendChild(taskIn);
+  wrap.appendChild(row);
+  return wrap;
+}
+
+async function removeEntry(en){
+  confirmDelId = null;
+  try {
+    // 附件先收掉再刪紀錄,順序反了的話附件會變成沒人指得到的孤兒
+    if (en.media && en.media.where === "inline") {
+      try { await fb.deleteDoc(fb.doc(db, "students", current.id, "media", en.id)); } catch (e) { console.warn("media del:", e && e.code); }
+    }
+    if (en.media && en.media.where === "storage" && en.media.path && storage) {
+      try { await fb.deleteObject(fb.ref(storage, en.media.path)); } catch (e) { console.warn("file del:", e && e.code); }
+    }
+    await fb.deleteDoc(fb.doc(db, "students", current.id, "entries", en.id));
+    entries = entries.filter(x => x.id !== en.id);
+    await syncLastTasks();
+  } catch (e) {
+    console.warn("removeEntry:", e && e.code, e && e.message);
+    slipMsg("sendErr", "sendErrText", "errDel");
+  }
+  renderTimeline();
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1504,7 +1788,12 @@ async function putMedia(entryId, studentId){
     const ext = (pending.mime.includes("mp4") ? "mp4" : pending.kind === "video" ? "webm" : "bin");
     const path = "students/" + studentId + "/" + entryId + "." + ext;
     const r = fb.ref(storage, path);
-    await fb.uploadBytes(r, pending.blob, { contentType: pending.mime || undefined });
+    /* authorUid 寫進 metadata:Storage 的規則沒辦法像 Firestore 那樣 get() 去查
+       簿本的擁有者,只能靠這個認出「是不是自己傳的」,刪除那條規則要用 */
+    await fb.uploadBytes(r, pending.blob, {
+      contentType: pending.mime || undefined,
+      customMetadata: { authorUid: me.uid },
+    });
     meta.where = "storage";
     meta.url = await fb.getDownloadURL(r);
     meta.path = path;
@@ -1601,8 +1890,10 @@ $("nameForm").addEventListener("submit", async ev => {
   const btn = $("nameSubmitBtn");
   btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("nameSaving");
   try {
-    await createStudent(name, slot);
-    // 畫面交給 watchStudents 的 onSnapshot 換,這裡不要自己再換一次
+    const ref = await createStudent(name, slot);
+    addingKid = false;
+    // 剛加的那一本直接翻開,不要讓家長自己再從清單找一次
+    setTimeout(() => { if (students.find(x => x.id === ref.id)) openNotebook(ref.id); }, 60);
   } catch (e) {
     console.warn("createStudent:", e && e.code, e && e.message);
     slipMsg("nameErr", "nameErrText", dbErrKey(e));
@@ -1615,6 +1906,7 @@ $("editNameBtn").onclick = () => {
   const box = $("renameBox");
   const open = box.hidden;
   box.hidden = !open;
+  $("dropBookBtn").hidden = !amTeacher;
   if (open && current) {
     $("renameInput").value = current.name || "";
     $("reslotInput").value = current.slot || "";
@@ -1623,6 +1915,37 @@ $("editNameBtn").onclick = () => {
   }
 };
 $("renameCancelBtn").onclick = () => { $("renameBox").hidden = true; };
+
+/* 刪掉整本。Firestore 刪父文件不會連子集合一起刪,所以要自己把 entries 與
+   media 一筆一筆收掉,不然那些資料會變成永遠讀不到、也刪不掉的孤兒 */
+$("dropBookBtn").onclick = async () => {
+  if (!current || !amTeacher) return;
+  if (!window.confirm(t("dropBookConfirm"))) return;
+  const btn = $("dropBookBtn");
+  btn.disabled = true;
+  const sid = current.id;
+  try {
+    const snap = await fb.getDocs(fb.collection(db, "students", sid, "entries"));
+    for (const d of snap.docs) {
+      const m = d.data().media;
+      if (m && m.where === "inline") {
+        try { await fb.deleteDoc(fb.doc(db, "students", sid, "media", d.id)); } catch (e) {}
+      }
+      if (m && m.where === "storage" && m.path && storage) {
+        try { await fb.deleteObject(fb.ref(storage, m.path)); } catch (e) {}
+      }
+      await fb.deleteDoc(fb.doc(db, "students", sid, "entries", d.id));
+    }
+    await fb.deleteDoc(fb.doc(db, "students", sid));
+    if (stopEntries) { stopEntries(); stopEntries = null; }
+    current = null; entries = [];
+    $("renameBox").hidden = true;
+    show("roster");
+  } catch (e) {
+    console.warn("dropBook:", e && e.code, e && e.message);
+    slipMsg("renameErr", "renameErrText", "errDel");
+  } finally { btn.disabled = false; }
+};
 
 $("renameForm").addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -1648,14 +1971,16 @@ $("sendBtn").onclick = async () => {
   if (!current) return;
   const ta = $("bodyInput");
   const text = ta.value.trim();
-  // 只錄一段不打字也該送得出去 —— 家長常常就是錄完直接送
-  if (!text && !pending) { ta.focus(); return; }
+  const taskText = amTeacher && teacherKind === "lesson" ? $("taskInput").value.trim() : "";
+  // 只錄一段、或只出作業不打字,都該送得出去
+  if (!text && !pending && !taskText) { ta.focus(); return; }
   slipMsg("sendErr", "sendErrText", null);
   const btn = $("sendBtn");
   btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("sending");
   try {
     await addEntry(text);
     ta.value = "";
+    $("taskInput").value = "";
     clearPending();
     // 時間軸交給 onSnapshot 更新,這裡不要自己塞一筆進去,不然會看到兩筆
   } catch (e) {
@@ -1674,6 +1999,14 @@ $("sendBtn").onclick = async () => {
 document.querySelectorAll("#kindSeg button").forEach(b => {
   b.onclick = () => { teacherKind = b.dataset.kind; renderComposer(); };
 });
+
+$("addKidBtn").onclick = () => {
+  addingKid = true;
+  $("nameInput").value = ""; $("slotInput").value = "";
+  slipMsg("nameErr", "nameErrText", null);
+  show("naming");
+  $("nameInput").focus();
+};
 
 $("backBtn").onclick = () => {
   stopRec(); clearPending();

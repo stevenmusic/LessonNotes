@@ -29,10 +29,15 @@ service firebase.storage {
       // 一支影片最多 60 MB(60 秒 900kbps 大約 7 MB,留很多餘裕給高畫質裝置)
       allow create: if signedIn()
                     && request.resource.size < 60 * 1024 * 1024
-                    && request.resource.contentType.matches('video/.*');
+                    && request.resource.contentType.matches('video/.*')
+                    && request.resource.metadata.authorUid == request.auth.uid;
 
       allow update: if false;
-      allow delete: if isTeacher();
+
+      /* 刪掉紀錄時影片要一起收掉。上傳時會把 authorUid 寫進 metadata,
+         這裡靠它認出是不是自己傳的;老師一律刪得動 */
+      allow delete: if isTeacher()
+                    || (signedIn() && resource.metadata.authorUid == request.auth.uid);
     }
 
     // 上面沒列到的路徑一律擋掉
