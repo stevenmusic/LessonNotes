@@ -1,0 +1,72 @@
+rules_version = '2';
+
+/*
+  琴課小簿的資料規則。
+
+  兩種人:老師(TEACHER_EMAILS 裡的信箱)與家長(其他所有署名的人)。
+  規則要跟 index.html 裡的 TEACHER_EMAILS 保持一致 —— 前端那份只決定畫面長怎樣,
+  真正擋人的是這裡。前端改了這裡沒改,等於沒改。
+
+  家長只碰得到自己建立的那本簿子;老師碰得到全部。
+  沒有任何一條規則允許「所有人讀所有東西」——家長 A 看不到家長 B 的孩子。
+*/
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // 老師名單。要加老師就加在這個陣列裡,並且同步改 index.html 的 TEACHER_EMAILS
+    function isTeacher() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in ['sifan888494@gmail.com'];
+    }
+
+    function isMyStudent(studentId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/students/$(studentId)).data.parentUid == request.auth.uid;
+    }
+
+    match /students/{studentId} {
+      allow read:   if isTeacher() || (signedIn() && resource.data.parentUid == request.auth.uid);
+
+      // 家長只能用自己的 uid 建簿子,不能替別人建
+      allow create: if signedIn()
+                    && request.resource.data.parentUid == request.auth.uid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 40;
+
+      // 改名字:家長改自己的,老師都能改。parentUid 不可以被改掉,不然簿子會被搬走
+      allow update: if (isTeacher() || (signedIn() && resource.data.parentUid == request.auth.uid))
+                    && request.resource.data.parentUid == resource.data.parentUid
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 40;
+
+      allow delete: if isTeacher();
+
+      match /entries/{entryId} {
+        allow read:   if isTeacher() || isMyStudent(studentId);
+
+        // 寫紀錄的人必須是自己,而且只有老師能寫 kind == 'lesson'
+        allow create: if (isTeacher() || isMyStudent(studentId))
+                      && request.resource.data.authorUid == request.auth.uid
+                      && request.resource.data.body is string
+                      && request.resource.data.body.size() > 0
+                      && request.resource.data.body.size() <= 2000
+                      && (request.resource.data.kind == 'reply' || isTeacher());
+
+        // 自己寫的才改得動、刪得掉
+        allow update, delete: if signedIn() && resource.data.authorUid == request.auth.uid;
+      }
+    }
+
+    // 上面沒列到的一律擋掉
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -265,6 +265,97 @@ h2.title{
 .binding li b{display:block;font-size:var(--fs-md);color:var(--muted-bright);font-weight:500;line-height:1.5}
 .binding li em{display:block;font-style:normal;font-size:var(--fs-sm);color:var(--muted);line-height:1.7;margin-top:2px}
 
+/* ── 表單元件 ───────────────────────── */
+label.lbl{display:block;font-size:var(--fs-sm);color:var(--muted);letter-spacing:.06em;margin-bottom:6px}
+input[type="text"],input[type="date"],textarea{
+  width:100%;font-family:inherit;font-size:var(--fs-lg);color:var(--ivory);
+  background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:11px 13px;line-height:1.6;
+}
+textarea{min-height:96px;resize:vertical;font-size:var(--fs-md)}
+input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.14)}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
+.field-row{margin-bottom:16px}
+.form-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+
+/* ── 誰署名了 + 闔上簿本 ───────────────────────── */
+.who-bar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  margin-top:clamp(22px, 4vw, 30px);padding-top:16px;border-top:1px solid var(--line);
+  font-size:var(--fs-sm);color:var(--muted);
+}
+.who-bar .me{display:flex;align-items:center;gap:8px;min-width:0}
+.who-bar img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);flex:none}
+.who-bar b{color:var(--muted-bright);font-weight:500;overflow-wrap:anywhere}
+.who-bar .spacer{flex:1}
+.badge{
+  font-size:var(--fs-2xs);color:var(--gold);letter-spacing:.08em;
+  border:1px solid var(--gold-edge);border-radius:var(--radius-pill);padding:2px 9px;flex:none;
+}
+
+/* ── 名冊 ───────────────────────── */
+.roster{display:grid;gap:10px}
+.roster-item{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+  padding:15px 17px;cursor:pointer;font-family:inherit;
+  transition:border-color .2s,transform .12s;
+}
+.roster-item:hover,.roster-item:focus-visible{border-color:var(--gold);outline:none}
+.roster-item:active{transform:scale(.995)}
+.roster-item .nm{flex:1;min-width:0}
+.roster-item .nm strong{
+  display:block;font-family:"Noto Serif TC",serif;font-weight:600;
+  font-size:var(--fs-xl);color:var(--ivory);line-height:1.3;overflow-wrap:anywhere;
+}
+.roster-item .nm span{display:block;font-size:var(--fs-sm);color:var(--muted);margin-top:3px}
+.roster-item .arw{flex:none;color:var(--gold)}
+.roster-item .arw svg{width:16px;height:16px;display:block}
+
+/* ── 時間軸 ───────────────────────── */
+.timeline{display:grid;gap:14px;margin-bottom:26px}
+.entry{
+  border:1px solid var(--line);border-radius:var(--radius-md);
+  padding:14px 16px;background:var(--panel);
+}
+/* 老師的課堂紀錄:左緣一道金線,是這本簿子的主體 */
+.entry--lesson{border-left:3px solid var(--gold-edge)}
+/* 家長的回覆:縮排 + 沒有底色,讀起來像寫在旁邊的一句話,不跟課堂紀錄搶 */
+.entry--reply{
+  background:transparent;border-style:dashed;
+  margin-left:clamp(14px, 5vw, 34px);
+}
+.entry-head{
+  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin-bottom:8px;
+  font-size:var(--fs-xs);color:var(--muted);letter-spacing:.04em;
+}
+.entry-head .who{color:var(--muted-bright);font-weight:500}
+.entry-head .kind{color:var(--gold)}
+.entry-body{font-size:var(--fs-md);color:var(--ivory);line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+.entry--reply .entry-body{color:var(--muted-bright)}
+
+.empty{
+  text-align:center;padding:30px 16px;color:var(--muted);
+  font-size:var(--fs-sm);line-height:1.9;
+  border:1px dashed var(--line);border-radius:var(--radius-md);
+}
+
+.backlink{
+  display:inline-flex;align-items:center;gap:5px;
+  background:none;border:0;padding:6px 4px;margin-bottom:14px;cursor:pointer;
+  color:var(--muted);font-family:inherit;font-size:var(--fs-sm);
+}
+.backlink:hover,.backlink:focus-visible{color:var(--gold-bright);outline:none}
+
+/* 簿本的抬頭:孩子的名字 + 上課時間,右邊一顆改名字 */
+.nb-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:6px}
+.nb-head .t{flex:1;min-width:180px}
+.nb-head h2{
+  font-family:"Noto Serif TC",serif;font-weight:700;
+  font-size:clamp(24px, 7vw, 32px);line-height:1.22;color:var(--ivory);overflow-wrap:anywhere;
+}
+.nb-head .slot{font-size:var(--fs-sm);color:var(--muted);margin-top:6px}
+
 footer{
   padding:16px 14px calc(18px + env(safe-area-inset-bottom));
   text-align:center;color:var(--muted);font-size:var(--fs-2xs);line-height:1.8;
@@ -313,13 +404,15 @@ footer{
 </header>
 
 <main>
-  <p class="eyebrow" data-i18n="eyebrow">老師與家長的聯絡簿</p>
-  <h2 class="title" data-i18n="title">琴課小簿</h2>
-  <p class="sub" data-i18n="lede">一本兩邊都看得到的簿子。這堂課練到哪裡、下週要帶什麼、家裡練得順不順，寫在同一頁上，不必再靠訊息翻來翻去。</p>
+  <!-- 還沒署名時看到的抬頭。署名之後簿本自己有抬頭(孩子的名字),這一段就收起來 -->
+  <div id="intro">
+    <p class="eyebrow" data-i18n="eyebrow">老師與家長的聯絡簿</p>
+    <h2 class="title" data-i18n="title">琴課小簿</h2>
+    <p class="sub" data-i18n="lede">一本兩邊都看得到的簿子。這堂課練到哪裡、下週要帶什麼、家裡練得順不順，寫在同一頁上，不必再靠訊息翻來翻去。</p>
+    <div class="rule"></div>
+  </div>
 
-  <div class="rule"></div>
-
-  <!-- ══ 還沒翻開:登入 ══ -->
+  <!-- ══ 還沒翻開:署名 ══ -->
   <section class="sheet" id="viewOut" aria-live="polite">
     <div class="sheet-head">
       <span class="mark">
@@ -349,7 +442,7 @@ footer{
     </div>
   </section>
 
-  <!-- ══ 簿本還沒裝上封面:firebaseConfig 還是 PASTE_HERE ══ -->
+  <!-- ══ firebaseConfig 還是 PASTE_HERE ══ -->
   <section class="sheet" id="viewSetup" hidden>
     <div class="sheet-head">
       <span class="mark">
@@ -366,53 +459,146 @@ footer{
     </div>
   </section>
 
-  <!-- ══ 已經翻開:扉頁 ══ -->
-  <section class="sheet" id="viewIn" hidden>
+  <!-- ══ 署名成功,但資料庫還沒開(或規則擋住) ══ -->
+  <section class="sheet" id="viewNoDb" hidden>
     <div class="sheet-head">
       <span class="mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13.5l1.8 1.8 3.7-4"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 12h5"/></svg>
       </span>
-      <h3 data-i18n="inTitle">這一頁是你的</h3>
+      <h3 data-i18n="nodbTitle">簿本的內頁還沒放進來</h3>
     </div>
     <div class="sheet-body">
-      <div class="person">
-        <img id="photo" alt="" hidden width="52" height="52" referrerpolicy="no-referrer">
-        <div class="who">
-          <span data-i18n="inCaption">這本簿子的主人</span>
-          <strong id="fName">—</strong>
-        </div>
+      <p data-i18n="nodbBody">你已經署名了，但這本簿子還沒有可以寫字的地方。</p>
+      <div class="slip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16v-5"/><path d="M12 8.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+        <span data-i18n-html="nodbHint">到 Firebase 主控台建立 <b>Firestore Database</b>，並把 <code>firestore.rules</code> 的內容貼進「規則」分頁。</span>
       </div>
-      <dl>
-        <div class="field"><dt data-i18n="labelEmail">聯絡信箱</dt><dd id="fEmail">—</dd></div>
-        <div class="field"><dt data-i18n="labelSerial">簿本編號</dt><dd class="serial" id="fUid">—</dd></div>
-      </dl>
-      <p class="fineprint" data-i18n="inFine">簿本編號是這本簿子認人用的記號，不必特別記下來。</p>
-      <div class="signin-row">
-        <button class="btn ghost" id="signOutBtn" type="button" data-i18n="signOutText">闔上簿本</button>
+      <p class="fineprint" id="nodbDetail"></p>
+    </div>
+  </section>
+
+  <!-- ══ 家長第一次進來:寫上孩子的名字 ══ -->
+  <section class="sheet" id="viewNaming" hidden>
+    <div class="sheet-head">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 10h5M12 14h3"/></svg>
+      </span>
+      <h3 data-i18n="nameTitle">先寫上孩子的名字</h3>
+    </div>
+    <div class="sheet-body">
+      <p data-i18n="nameBody">這本簿子的封面要寫誰的名字？老師會看到這個名字，所以寫孩子的名字比較好認。</p>
+      <form id="nameForm" novalidate>
+        <div class="field-row">
+          <label class="lbl" for="nameInput" data-i18n="nameLabel">孩子的名字</label>
+          <input type="text" id="nameInput" maxlength="40" autocomplete="off"
+                 data-i18n-attr="placeholder:namePlaceholder" placeholder="例如：林小明">
+        </div>
+        <div class="field-row">
+          <label class="lbl" for="slotInput" data-i18n="slotLabel">上課時間（可以不填）</label>
+          <input type="text" id="slotInput" maxlength="40" autocomplete="off"
+                 data-i18n-attr="placeholder:slotPlaceholder" placeholder="例如：每週三 16:00">
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit" id="nameSubmitBtn" data-i18n="nameSubmit">開始這本簿子</button>
+        </div>
+      </form>
+      <p class="fineprint" data-i18n="nameHint">之後隨時可以改。</p>
+      <div class="slip warn" id="nameErr" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5"/><path d="M12 17.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+        <span id="nameErrText"></span>
       </div>
     </div>
   </section>
 
-  <div class="rule"></div>
-
-  <section class="binding">
-    <h4 data-i18n="bindTitle">接下來要裝訂的幾頁</h4>
-    <p data-i18n="bindBody">這一版先把署名做好，讓老師與家長進來時各自認得自己的那一頁。下面幾頁還在寫。</p>
-    <ul>
-      <li>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v15H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>
-        <span><b data-i18n="bind1">課堂紀錄</b><em data-i18n="bind1d">這堂課練了什麼、進度到哪一小節、下週要帶的譜。</em></span>
-      </li>
-      <li>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V8"/><path d="M6 20v-6"/><path d="M18 20V4"/></svg>
-        <span><b data-i18n="bind2">家裡的練習</b><em data-i18n="bind2d">家長按一下就記一次，老師看得到這週在家練了幾天。</em></span>
-      </li>
-      <li>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
-        <span><b data-i18n="bind3">上課日與堂數</b><em data-i18n="bind3d">下一堂是哪天、這期還剩幾堂、請假怎麼補。</em></span>
-      </li>
-    </ul>
+  <!-- ══ 老師:名冊 ══ -->
+  <section id="viewRoster" hidden>
+    <div class="nb-head">
+      <div class="t">
+        <h2 data-i18n="rosterTitle">名冊</h2>
+        <p class="slot" id="rosterCount"></p>
+      </div>
+    </div>
+    <div class="rule"></div>
+    <div class="roster" id="roster"></div>
+    <div class="empty" id="rosterEmpty" hidden data-i18n="rosterEmpty">還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。</div>
   </section>
+
+  <!-- ══ 某一本簿子:課堂紀錄 + 回覆 ══ -->
+  <section id="viewNotebook" hidden>
+    <button class="backlink" id="backBtn" type="button" hidden>
+      <span aria-hidden="true">←</span><span data-i18n="backToRoster">回到名冊</span>
+    </button>
+    <div class="nb-head">
+      <div class="t">
+        <h2 id="nbName">—</h2>
+        <p class="slot" id="nbSlot" hidden></p>
+      </div>
+      <button class="btn small" id="editNameBtn" type="button" data-i18n="editName">改名字</button>
+    </div>
+    <div class="rule"></div>
+
+    <section class="sheet" id="renameBox" hidden>
+      <div class="sheet-body">
+        <form id="renameForm" novalidate>
+          <div class="field-row">
+            <label class="lbl" for="renameInput" data-i18n="nameLabel">孩子的名字</label>
+            <input type="text" id="renameInput" maxlength="40" autocomplete="off">
+          </div>
+          <div class="field-row">
+            <label class="lbl" for="reslotInput" data-i18n="slotLabel">上課時間（可以不填）</label>
+            <input type="text" id="reslotInput" maxlength="40" autocomplete="off">
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit" id="renameSaveBtn" data-i18n="saveName">存起來</button>
+            <button class="btn ghost" type="button" id="renameCancelBtn" data-i18n="cancel">取消</button>
+          </div>
+        </form>
+        <div class="slip warn" id="renameErr" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5"/><path d="M12 17.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+          <span id="renameErrText"></span>
+        </div>
+      </div>
+    </section>
+
+    <div class="timeline" id="timeline"></div>
+    <div class="empty" id="nbEmpty" hidden></div>
+
+    <section class="sheet" id="composer">
+      <div class="sheet-head">
+        <span class="mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13h5"/></svg>
+        </span>
+        <h3 id="composerTitle">寫下這堂課</h3>
+      </div>
+      <div class="sheet-body">
+        <div class="field-row" id="dateRow" hidden>
+          <label class="lbl" for="dateInput" data-i18n="lessonDateLabel">上課日期</label>
+          <input type="date" id="dateInput">
+        </div>
+        <div class="field-row">
+          <textarea id="bodyInput" maxlength="2000"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="button" id="sendBtn">寫進簿本</button>
+        </div>
+        <div class="slip warn" id="sendErr" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5"/><path d="M12 17.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
+          <span id="sendErrText"></span>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- ══ 誰署名了 ══ -->
+  <div class="who-bar" id="whoBar" hidden>
+    <span class="me">
+      <img id="whoPhoto" hidden alt="" width="26" height="26" referrerpolicy="no-referrer">
+      <span><span data-i18n="signedAs">目前署名</span>　<b id="whoName">—</b></span>
+    </span>
+    <span class="badge" id="teacherBadge" hidden data-i18n="teacherBadge">老師</span>
+    <span class="spacer"></span>
+    <button class="btn ghost small" id="signOutBtn" type="button" data-i18n="signOutText">闔上簿本</button>
+  </div>
 </main>
 
 <footer>LessonNotes</footer>
@@ -454,18 +640,40 @@ const I18N = {
     setupTitle: "簿本還沒裝訂完成",
     setupBody: "這一頁還在等一份設定資料。填進去之後，署名的入口就會出現在這裡。",
     setupHint: '把 <code>index.html</code> 裡 <code>firebaseConfig</code> 的六個 <code>PASTE_HERE</code> 換成 Firebase 主控台給的值，並把這個網域加進 Authentication 的允許清單。',
-    inTitle: "這一頁是你的",
-    inCaption: "這本簿子的主人",
-    labelEmail: "聯絡信箱", labelSerial: "簿本編號",
-    inFine: "簿本編號是這本簿子認人用的記號，不必特別記下來。",
-    signOutText: "闔上簿本",
-    noName: "還沒寫上名字",
-    noEmail: "沒有留信箱",
-    bindTitle: "接下來要裝訂的幾頁",
-    bindBody: "這一版先把署名做好，讓老師與家長進來時各自認得自己的那一頁。下面幾頁還在寫。",
-    bind1: "課堂紀錄", bind1d: "這堂課練了什麼、進度到哪一小節、下週要帶的譜。",
-    bind2: "家裡的練習", bind2d: "家長按一下就記一次，老師看得到這週在家練了幾天。",
-    bind3: "上課日與堂數", bind3d: "下一堂是哪天、這期還剩幾堂、請假怎麼補。",
+    nodbTitle: "簿本的內頁還沒放進來",
+    nodbBody: "你已經署名了，但這本簿子還沒有可以寫字的地方。",
+    nodbHint: '到 Firebase 主控台建立 <b>Firestore Database</b>，並把 <code>firestore.rules</code> 的內容貼進「規則」分頁。',
+    nameTitle: "先寫上孩子的名字",
+    nameBody: "這本簿子的封面要寫誰的名字？老師會看到這個名字，所以寫孩子的名字比較好認。",
+    nameLabel: "孩子的名字",
+    namePlaceholder: "例如：林小明",
+    slotLabel: "上課時間（可以不填）",
+    slotPlaceholder: "例如：每週三 16:00",
+    nameSubmit: "開始這本簿子",
+    nameSaving: "正在寫上…",
+    nameHint: "之後隨時可以改。",
+    nameEmpty: "還沒寫名字。",
+    editName: "改名字", saveName: "存起來", cancel: "取消",
+    rosterTitle: "名冊",
+    rosterCount: "{n} 本簿子",
+    rosterEmpty: "還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。",
+    rosterNever: "還沒有任何紀錄",
+    rosterLast: "最後一筆 {d}",
+    backToRoster: "回到名冊",
+    lessonDateLabel: "上課日期",
+    composerTeacher: "寫下這堂課",
+    composerParent: "回一句給老師",
+    lessonPlaceholder: "這堂課練了什麼、進度到哪一小節、下週要帶的譜…",
+    replyPlaceholder: "家裡練得怎麼樣？有什麼想問老師的？",
+    sendTeacher: "寫進簿本",
+    sendParent: "寫上去",
+    sending: "正在寫入…",
+    emptyTeacher: "這一頁還是空白的。寫下第一堂課吧。",
+    emptyParent: "老師還沒寫下第一堂課。",
+    kindLesson: "課堂紀錄", kindReply: "回覆",
+    roleTeacher: "老師", roleParent: "家長",
+    signedAs: "目前署名", signOutText: "闔上簿本", teacherBadge: "老師",
+    justNow: "剛剛",
     /* 錯誤訊息也照紙本的口氣寫。Firebase 的 code 一律不顯示在畫面上 */
     errClosed: "那扇窗被關上了，還沒署名。要再試一次嗎？",
     errBlocked: "瀏覽器把那扇窗擋住了。允許這個網站開啟視窗之後再試一次。",
@@ -474,6 +682,9 @@ const I18N = {
     errPending: "上一次的署名還沒結束，稍等一下再按。",
     errGeneric: "一時翻不開這一頁，請稍後再試一次。",
     errOffline: "現在連不上署名的服務，暫時沒辦法署名。等一下重新整理這一頁再試。",
+    errSave: "這一筆沒有寫進去。再試一次看看。",
+    errPerm: "這本簿子不開放給你翻。",
+    errLoad: "讀不到簿本的內容。重新整理這一頁再試。",
   },
   en: {
     pageTitle: "LessonNotes — the lesson notebook",
@@ -492,18 +703,40 @@ const I18N = {
     setupTitle: "The notebook isn't bound yet",
     setupBody: "This page is still waiting on its settings. Once they are filled in, the place to sign your name appears here.",
     setupHint: 'Replace the six <code>PASTE_HERE</code> values in <code>firebaseConfig</code> inside <code>index.html</code> with the ones from the Firebase console, and add this domain to the Authentication allowed list.',
-    inTitle: "This page is yours",
-    inCaption: "This notebook belongs to",
-    labelEmail: "Contact email", labelSerial: "Notebook no.",
-    inFine: "The notebook number is just how this notebook tells people apart — no need to remember it.",
-    signOutText: "Close the notebook",
-    noName: "No name written yet",
-    noEmail: "No email on file",
-    bindTitle: "Pages still being bound",
-    bindBody: "This first version only handles signing in, so teachers and families each land on their own page. The pages below are still being written.",
-    bind1: "Lesson notes", bind1d: "What was covered, which bar the piece reached, which scores to bring next week.",
-    bind2: "Practice at home", bind2d: "One tap from a parent logs a session, so the teacher can see how the week went.",
-    bind3: "Lesson days and credits", bind3d: "When the next lesson is, how many are left this term, how to make up a missed one.",
+    nodbTitle: "The pages aren't in the notebook yet",
+    nodbBody: "You have signed in, but there is nowhere to write yet.",
+    nodbHint: 'Create a <b>Firestore Database</b> in the Firebase console and paste the contents of <code>firestore.rules</code> into its Rules tab.',
+    nameTitle: "Write the child's name first",
+    nameBody: "Whose name goes on the cover? The teacher sees this name, so the child's name is easiest to recognise.",
+    nameLabel: "Child's name",
+    namePlaceholder: "e.g. Emma Lin",
+    slotLabel: "Lesson time (optional)",
+    slotPlaceholder: "e.g. Wednesdays 4pm",
+    nameSubmit: "Start this notebook",
+    nameSaving: "Writing…",
+    nameHint: "You can change it any time.",
+    nameEmpty: "The name is still blank.",
+    editName: "Rename", saveName: "Save", cancel: "Cancel",
+    rosterTitle: "The register",
+    rosterCount: "{n} notebooks",
+    rosterEmpty: "No family has signed in yet. Once a parent signs in with Google, their name appears here.",
+    rosterNever: "Nothing written yet",
+    rosterLast: "Last entry {d}",
+    backToRoster: "Back to the register",
+    lessonDateLabel: "Lesson date",
+    composerTeacher: "Write up this lesson",
+    composerParent: "Write back to the teacher",
+    lessonPlaceholder: "What the lesson covered, which bar the piece reached, what to bring next week…",
+    replyPlaceholder: "How did practice go at home? Anything to ask the teacher?",
+    sendTeacher: "Write it in",
+    sendParent: "Write it in",
+    sending: "Writing…",
+    emptyTeacher: "This page is still blank. Write up the first lesson.",
+    emptyParent: "The teacher hasn't written up a lesson yet.",
+    kindLesson: "Lesson note", kindReply: "Reply",
+    roleTeacher: "Teacher", roleParent: "Parent",
+    signedAs: "Signed in as", signOutText: "Close the notebook", teacherBadge: "Teacher",
+    justNow: "just now",
     errClosed: "That window was closed before you signed. Try again?",
     errBlocked: "The browser blocked that window. Allow pop-ups for this site and try again.",
     errNetwork: "Couldn't reach the other side — the connection looks down. Check it and try again.",
@@ -511,13 +744,20 @@ const I18N = {
     errPending: "The last attempt hasn't finished. Give it a moment before pressing again.",
     errGeneric: "That page wouldn't open just now. Please try again shortly.",
     errOffline: "The signing service can't be reached right now. Reload this page and try again in a moment.",
+    errSave: "That entry didn't get written. Please try again.",
+    errPerm: "This notebook isn't open to you.",
+    errLoad: "The notebook's pages wouldn't load. Reload this page and try again.",
   },
 };
-const LANG_KEY = "sm_lang"; // 與其他五個工具 + 首頁共用同一把 key
+const LANG_KEY = "sm_lang"; // 與其他四個工具 + 首頁共用同一把 key
 let LANG = "zh";
 try { LANG = localStorage.getItem(LANG_KEY) === "en" ? "en" : "zh"; } catch (e) {}
 
-function t(key){ return (I18N[LANG] && I18N[LANG][key]) || I18N.zh[key] || key; }
+function t(key, vars){
+  let out = (I18N[LANG] && I18N[LANG][key]) || I18N.zh[key] || key;
+  if (vars) for (const k in vars) out = out.split("{" + k + "}").join(vars[k]);
+  return out;
+}
 
 /* Google 的署名視窗預設跟瀏覽器語言走,頁面切成英文時那扇窗還是中文就對不起來 */
 function syncAuthLanguage(){ if (auth) auth.languageCode = LANG === "en" ? "en" : "zh-TW"; }
@@ -543,18 +783,21 @@ function applyLanguage(lang){
   $("langToggle").setAttribute("aria-pressed", String(LANG === "en"));
   syncAuthLanguage();
 
-  /* 畫面上動態寫進去的字(扉頁的三欄、錯誤紙條、登入鈕的忙碌狀態)不吃 data-i18n,
-     換語言之後要重畫一次,否則中文頁面會留著英文的「No name written yet」 */
-  renderUser();
-  if (lastErrKey) showError(lastErrKey);
+  /* 畫面上動態寫進去的東西(名冊、時間軸、輸入框提示、錯誤紙條、按鈕的忙碌狀態)
+     不吃 data-i18n,換語言之後要重畫一次 */
   setBusy(busy);
+  if (lastErrKey) showError(lastErrKey);
+  renderWhoBar();
+  renderComposer();
+  renderRoster();
+  renderTimeline();
 }
 
 /* ══ 主題 ══
-   sm_theme 是六個工具共用的 key,值只有 "light" / "dark"。同一個 origin,在任一個
+   sm_theme 是五個工具共用的 key,值只有 "light" / "dark"。同一個 origin,在任一個
    工具切過主題,其他幾個打開就是同一個。沒存過的時候用本工具自己的預設——共用的是
    「使用者的選擇」,不是「還沒選之前的預設」。這一頁是聯絡簿,預設是紙張色;
-   其他五個工具預設深色。<body> 開頭那段 bootstrap 的判斷要跟這裡一致。 */
+   其他四個工具預設深色。<body> 開頭那段 bootstrap 的判斷要跟這裡一致。 */
 const THEME_KEY = "sm_theme";
 function themeIsLight(){
   try {
@@ -577,7 +820,7 @@ $("themeToggle").onclick = () => {
 $("langToggle").onclick = () => applyLanguage(LANG === "zh" ? "en" : "zh");
 
 /* ══════════════════════════════════════════════════════════════
-   1. Firebase v10 modular ESM —— 設定與登入流程
+   1. 設定
    ══════════════════════════════════════════════════════════════ */
 const firebaseConfig = {
   apiKey: "AIzaSyDo4NAsB7Vv0JALI3upCqeLrL8zR3eOrSY",
@@ -588,29 +831,60 @@ const firebaseConfig = {
   appId: "1:1002288020688:web:662494c517d1363a6332d5",
 };
 
+/* 老師名單。這裡只決定「畫面長怎樣」——真正擋人的是 firestore.rules 裡同一份名單,
+   兩邊要一起改。改了這裡沒改那裡,等於沒改 */
+const TEACHER_EMAILS = ["sifan888494@gmail.com"];
+
 /* 還沒把設定填進去就初始化的話,按下署名只會收到 auth/invalid-api-key,畫面上看起來
    像是壞了。所以先檢查,沒填完就換成「還沒裝訂完成」那一頁,連 Firebase 都不初始化 */
 const CONFIGURED = Object.values(firebaseConfig)
   .every(v => typeof v === "string" && v && !v.includes("PASTE_HERE"));
 
-let auth = null;
-let busy = false;
-/* 署名這條路整個不能用(CDN 抓不到)。setBusy() 要看它,否則使用者切一次語言
-   就會把那顆按不動的按鈕又打開 */
-let unavailable = false;
+/* ══════════════════════════════════════════════════════════════
+   2. 狀態
+   ══════════════════════════════════════════════════════════════ */
+let fb = null;              // Firebase 的模組(動態載進來的)
+let auth = null, db = null;
+let busy = false;           // 署名鈕轉圈中
+let unavailable = false;    // 署名這條路整個不能用(CDN 抓不到)
 let lastErrKey = null;
-let currentUser = null;
+let me = null;              // 目前署名的人
+let amTeacher = false;
+let students = [];          // 老師:全部;家長:自己的
+let current = null;         // 目前打開的那本簿子
+let entries = [];           // current 的紀錄
+let stopEntries = null;     // onSnapshot 的取消函式
+let stopStudents = null;
 
-function show(view){
-  $("viewOut").hidden   = view !== "out";
-  $("viewIn").hidden    = view !== "in";
-  $("viewSetup").hidden = view !== "setup";
+function isTeacherUser(u){
+  const mail = (u && u.email || "").toLowerCase();
+  return !!mail && TEACHER_EMAILS.map(x => x.toLowerCase()).includes(mail);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   3. 畫面切換
+   ══════════════════════════════════════════════════════════════ */
+const VIEWS = ["viewOut", "viewSetup", "viewNoDb", "viewNaming", "viewRoster", "viewNotebook"];
+let view = "out";
+function show(name){
+  view = name;
+  VIEWS.forEach(id => { $(id).hidden = ("view" + name.charAt(0).toUpperCase() + name.slice(1)) !== id; });
+  // 署名之後簿本自己有抬頭,上面那段介紹就收起來
+  $("intro").hidden = !(name === "out" || name === "setup" || name === "noDb");
+  $("whoBar").hidden = !me;
+}
+
 function showError(key){
   lastErrKey = key;
   const slip = $("errSlip");
   if (!key) { slip.hidden = true; $("errText").textContent = ""; return; }
   $("errText").textContent = t(key);
+  slip.hidden = false;
+}
+function slipMsg(slipId, textId, key){
+  const slip = $(slipId);
+  if (!key) { slip.hidden = true; return; }
+  $(textId).textContent = t(key);
   slip.hidden = false;
 }
 function setBusy(on){
@@ -625,16 +899,408 @@ function setBusy(on){
   if (on && !sp) { sp = document.createElement("i"); sp.className = "spinner"; btn.prepend(sp); }
   if (!on && sp) sp.remove();
 }
-function renderUser(){
-  const u = currentUser;
-  if (!u) return;
-  const name = u.displayName || t("noName");
-  $("fName").textContent = name;
-  $("fEmail").textContent = u.email || t("noEmail");
-  $("fUid").textContent = u.uid;
-  const img = $("photo");
-  if (u.photoURL) { img.src = u.photoURL; img.alt = name; img.hidden = false; }
+
+function renderWhoBar(){
+  $("whoBar").hidden = !me;
+  if (!me) return;
+  $("whoName").textContent = me.displayName || me.email || "—";
+  $("teacherBadge").hidden = !amTeacher;
+  const img = $("whoPhoto");
+  if (me.photoURL) { img.src = me.photoURL; img.hidden = false; }
   else { img.hidden = true; img.removeAttribute("src"); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   4. 日期
+   ══════════════════════════════════════════════════════════════ */
+function todayISO(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+/* Firestore 的 serverTimestamp() 在伺服器回話之前是 null,本地那一筆會先以 null 出現。
+   那一瞬間不要顯示「1970」,顯示「剛剛」 */
+function stamp(ts){
+  if (!ts || typeof ts.toDate !== "function") return t("justNow");
+  return fmtDate(ts.toDate());
+}
+function fmtDate(d){
+  try {
+    return d.toLocaleDateString(LANG === "en" ? "en-GB" : "zh-TW",
+      { year: "numeric", month: "short", day: "numeric" });
+  } catch (e) { return d.toISOString().slice(0, 10); }
+}
+function fmtISO(iso){
+  if (!iso) return "";
+  const parts = String(iso).split("-");
+  if (parts.length !== 3) return iso;
+  const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  return isNaN(d.getTime()) ? iso : fmtDate(d);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   5. 名冊
+   ══════════════════════════════════════════════════════════════ */
+function renderRoster(){
+  const box = $("roster");
+  box.textContent = "";
+  $("rosterEmpty").hidden = students.length > 0;
+  $("rosterCount").textContent = students.length ? t("rosterCount", { n: students.length }) : "";
+
+  students.forEach(st => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "roster-item";
+    const nm = document.createElement("span");
+    nm.className = "nm";
+    const strong = document.createElement("strong");
+    strong.textContent = st.name || t("nameEmpty");
+    const sub = document.createElement("span");
+    const bits = [];
+    if (st.slot) bits.push(st.slot);
+    bits.push(st.lastEntryAt && st.lastEntryAt.toDate
+      ? t("rosterLast", { d: fmtDate(st.lastEntryAt.toDate()) })
+      : t("rosterNever"));
+    sub.textContent = bits.join(" · ");
+    nm.append(strong, sub);
+
+    const arw = document.createElement("span");
+    arw.className = "arw";
+    arw.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+    b.append(nm, arw);
+    b.onclick = () => openNotebook(st.id);
+    box.appendChild(b);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   6. 簿本內頁
+   ══════════════════════════════════════════════════════════════ */
+function renderNotebookHead(){
+  if (!current) return;
+  $("nbName").textContent = current.name || t("nameEmpty");
+  const slot = $("nbSlot");
+  slot.textContent = current.slot || "";
+  slot.hidden = !current.slot;
+  // 老師是從名冊點進來的,要有路回去;家長只有自己那一本,沒有名冊可回
+  $("backBtn").hidden = !amTeacher;
+}
+
+function renderComposer(){
+  const box = $("composer");
+  if (!current) { box.hidden = true; return; }
+  box.hidden = false;
+  $("composerTitle").textContent = amTeacher ? t("composerTeacher") : t("composerParent");
+  $("dateRow").hidden = !amTeacher;           // 上課日期只有老師填
+  $("bodyInput").placeholder = amTeacher ? t("lessonPlaceholder") : t("replyPlaceholder");
+  const btn = $("sendBtn");
+  if (!btn.dataset.busy) btn.textContent = amTeacher ? t("sendTeacher") : t("sendParent");
+}
+
+function renderTimeline(){
+  const box = $("timeline");
+  box.textContent = "";
+  const empty = $("nbEmpty");
+  if (!current) return;
+  if (!entries.length) {
+    empty.hidden = false;
+    empty.textContent = amTeacher ? t("emptyTeacher") : t("emptyParent");
+    return;
+  }
+  empty.hidden = true;
+
+  entries.forEach(en => {
+    const art = document.createElement("article");
+    art.className = "entry entry--" + (en.kind === "lesson" ? "lesson" : "reply");
+
+    const head = document.createElement("div");
+    head.className = "entry-head";
+    const kind = document.createElement("span");
+    kind.className = "kind";
+    kind.textContent = en.kind === "lesson" ? t("kindLesson") : t("kindReply");
+    const who = document.createElement("span");
+    who.className = "who";
+    who.textContent = en.authorName || (en.authorRole === "teacher" ? t("roleTeacher") : t("roleParent"));
+    const when = document.createElement("span");
+    // 課堂紀錄顯示老師填的上課日期,回覆顯示寫下的時間
+    when.textContent = en.kind === "lesson" && en.date ? fmtISO(en.date) : stamp(en.createdAt);
+    head.append(kind, who, when);
+
+    const body = document.createElement("div");
+    body.className = "entry-body";
+    body.textContent = en.body || "";
+
+    art.append(head, body);
+    box.appendChild(art);
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   7. 資料
+   ══════════════════════════════════════════════════════════════ */
+function dbErrKey(e){
+  const code = e && e.code || "";
+  if (code === "permission-denied") return "errPerm";
+  if (code === "unavailable" || code === "failed-precondition") return "errLoad";
+  return "errSave";
+}
+
+function watchStudents(){
+  const { collection, query, where, orderBy, onSnapshot } = fb;
+  if (stopStudents) { stopStudents(); stopStudents = null; }
+
+  // 老師看全部,家長只看得到自己建的。規則那邊也是同一條線,前端這個查詢只是不要多抓
+  const base = collection(db, "students");
+  const q = amTeacher
+    ? query(base, orderBy("name"))
+    : query(base, where("parentUid", "==", me.uid));
+
+  stopStudents = onSnapshot(q, snap => {
+    students = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    if (!amTeacher) {
+      // 家長:沒有簿子就先去取名字,有就直接翻開
+      if (!students.length) { current = null; show("naming"); return; }
+      const keep = current && students.find(x => x.id === current.id);
+      openNotebook((keep || students[0]).id);
+      return;
+    }
+    // 老師:目前正看著某一本的話,順手把抬頭更新(例如家長剛改了名字)
+    if (current) {
+      const fresh = students.find(x => x.id === current.id);
+      if (fresh) { current = fresh; renderNotebookHead(); }
+    } else {
+      show("roster");
+    }
+    renderRoster();
+  }, err => {
+    // 資料庫還沒建、或規則擋住 —— 這兩種都是設定沒做完,給看得懂的說明而不是錯誤代碼
+    console.warn("students:", err && err.code, err && err.message);
+    $("nodbDetail").textContent = (err && err.code) ? "(" + err.code + ")" : "";
+    show("noDb");
+  });
+}
+
+function openNotebook(id){
+  const st = students.find(x => x.id === id);
+  if (!st) return;
+  current = st;
+  entries = [];
+  renderNotebookHead();
+  renderComposer();
+  renderTimeline();
+  $("renameBox").hidden = true;
+  show("notebook");
+  watchEntries(id);
+}
+
+function watchEntries(studentId){
+  const { collection, query, orderBy, onSnapshot } = fb;
+  if (stopEntries) { stopEntries(); stopEntries = null; }
+  const q = query(collection(db, "students", studentId, "entries"), orderBy("createdAt", "asc"));
+  stopEntries = onSnapshot(q, snap => {
+    entries = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+    renderTimeline();
+  }, err => {
+    console.warn("entries:", err && err.code, err && err.message);
+    slipMsg("sendErr", "sendErrText", dbErrKey(err));
+  });
+}
+
+async function createStudent(name, slot){
+  const { collection, addDoc, serverTimestamp } = fb;
+  return addDoc(collection(db, "students"), {
+    name: name,
+    slot: slot || "",
+    parentUid: me.uid,
+    parentName: me.displayName || "",
+    parentEmail: me.email || "",
+    createdAt: serverTimestamp(),
+    lastEntryAt: null,
+  });
+}
+
+async function addEntry(text){
+  const { collection, addDoc, doc, updateDoc, serverTimestamp } = fb;
+  const kind = amTeacher ? "lesson" : "reply";
+  const payload = {
+    kind: kind,
+    body: text,
+    authorUid: me.uid,
+    authorName: me.displayName || me.email || "",
+    authorRole: amTeacher ? "teacher" : "parent",
+    createdAt: serverTimestamp(),
+  };
+  if (kind === "lesson") payload.date = $("dateInput").value || todayISO();
+
+  await addDoc(collection(db, "students", current.id, "entries"), payload);
+  /* 名冊要看得到「最後一筆是什麼時候」,不然老師得一本一本點進去才知道誰還沒寫。
+     這一筆失敗不影響剛寫進去的紀錄,所以吞掉不吵使用者 */
+  try {
+    await updateDoc(doc(db, "students", current.id), { lastEntryAt: serverTimestamp() });
+  } catch (e) { console.warn("lastEntryAt:", e && e.code); }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   8. 互動
+   ══════════════════════════════════════════════════════════════ */
+$("nameForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const name = $("nameInput").value.trim();
+  const slot = $("slotInput").value.trim();
+  if (!name) { slipMsg("nameErr", "nameErrText", "nameEmpty"); $("nameInput").focus(); return; }
+  slipMsg("nameErr", "nameErrText", null);
+  const btn = $("nameSubmitBtn");
+  btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("nameSaving");
+  try {
+    await createStudent(name, slot);
+    // 畫面交給 watchStudents 的 onSnapshot 換,這裡不要自己再換一次
+  } catch (e) {
+    console.warn("createStudent:", e && e.code, e && e.message);
+    slipMsg("nameErr", "nameErrText", dbErrKey(e));
+  } finally {
+    btn.disabled = false; delete btn.dataset.busy; btn.textContent = t("nameSubmit");
+  }
+});
+
+$("editNameBtn").onclick = () => {
+  const box = $("renameBox");
+  const open = box.hidden;
+  box.hidden = !open;
+  if (open && current) {
+    $("renameInput").value = current.name || "";
+    $("reslotInput").value = current.slot || "";
+    slipMsg("renameErr", "renameErrText", null);
+    $("renameInput").focus();
+  }
+};
+$("renameCancelBtn").onclick = () => { $("renameBox").hidden = true; };
+
+$("renameForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  if (!current) return;
+  const name = $("renameInput").value.trim();
+  if (!name) { slipMsg("renameErr", "renameErrText", "nameEmpty"); $("renameInput").focus(); return; }
+  const slot = $("reslotInput").value.trim();
+  const btn = $("renameSaveBtn");
+  btn.disabled = true;
+  try {
+    const { doc, updateDoc } = fb;
+    await updateDoc(doc(db, "students", current.id), { name: name, slot: slot });
+    current.name = name; current.slot = slot;
+    renderNotebookHead();
+    $("renameBox").hidden = true;
+  } catch (e) {
+    console.warn("rename:", e && e.code, e && e.message);
+    slipMsg("renameErr", "renameErrText", dbErrKey(e));
+  } finally { btn.disabled = false; }
+});
+
+$("sendBtn").onclick = async () => {
+  if (!current) return;
+  const ta = $("bodyInput");
+  const text = ta.value.trim();
+  if (!text) { ta.focus(); return; }
+  slipMsg("sendErr", "sendErrText", null);
+  const btn = $("sendBtn");
+  btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("sending");
+  try {
+    await addEntry(text);
+    ta.value = "";
+    // 時間軸交給 onSnapshot 更新,這裡不要自己塞一筆進去,不然會看到兩筆
+  } catch (e) {
+    console.warn("addEntry:", e && e.code, e && e.message);
+    slipMsg("sendErr", "sendErrText", dbErrKey(e));
+  } finally {
+    btn.disabled = false; delete btn.dataset.busy;
+    btn.textContent = amTeacher ? t("sendTeacher") : t("sendParent");
+  }
+};
+
+$("backBtn").onclick = () => {
+  if (stopEntries) { stopEntries(); stopEntries = null; }
+  current = null; entries = [];
+  renderRoster();
+  show("roster");
+};
+
+/* ══════════════════════════════════════════════════════════════
+   9. 起動
+   ══════════════════════════════════════════════════════════════ */
+/* 先把主題與語言套好,再去載 Firebase。順序反過來的話,存了英文偏好的使用者
+   會先看到一整頁中文,等 CDN 回來才換——而 CDN 慢的時候那是好幾秒 */
+applyTheme();
+applyLanguage(LANG);
+show("out");
+
+if (CONFIGURED) startApp();   // 刻意不 await:模組慢,不該擋住整頁
+else show("setup");
+
+async function startApp(){
+  try {
+    const [appMod, authMod, dbMod] = await Promise.all([
+      import(FB_CDN + "/firebase-app.js"),
+      import(FB_CDN + "/firebase-auth.js"),
+      import(FB_CDN + "/firebase-firestore.js"),
+    ]);
+    fb = Object.assign({}, appMod, authMod, dbMod);
+  } catch (e) {
+    /* 連 CDN 都抓不到,署名這件事這次就做不了。把入口關掉並說清楚,
+       不要留一顆按下去沒反應的按鈕 */
+    unavailable = true;
+    setBusy(false);
+    showError("errOffline");
+    return;
+  }
+
+  const app = fb.initializeApp(firebaseConfig);
+  auth = fb.getAuth(app);
+  db = fb.getFirestore(app);
+  /* 彈出視窗的語言跟著這一頁走(modular SDK 沒有 auth.useDeviceLanguage(),
+     那是 compat 版的方法;這裡直接設 languageCode) */
+  syncAuthLanguage();
+  /* 署名要留到下次打開還在——家長不會想每次進來都簽一遍。
+     瀏覽器不給寫本機儲存(無痕模式之類)時不要讓整頁掛掉,退回只記這一次 */
+  fb.setPersistence(auth, fb.browserLocalPersistence).catch(() => {});
+
+  fb.onAuthStateChanged(auth, user => {
+    me = user;
+    setBusy(false);
+    if (stopStudents) { stopStudents(); stopStudents = null; }
+    if (stopEntries) { stopEntries(); stopEntries = null; }
+    current = null; entries = []; students = [];
+
+    if (!user) { amTeacher = false; renderWhoBar(); show("out"); return; }
+
+    amTeacher = isTeacherUser(user);
+    showError(null);
+    renderWhoBar();
+    $("dateInput").value = todayISO();
+    renderComposer();
+    watchStudents();
+  });
+
+  const provider = new fb.GoogleAuthProvider();
+  /* 同一台裝置上老師與家長可能用不同帳號,每次都讓使用者自己選要用哪一個,
+     不要默默沿用上次那個 */
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  $("signInBtn").onclick = async () => {
+    if (busy) return;
+    showError(null);
+    setBusy(true);
+    try {
+      await fb.signInWithPopup(auth, provider);
+      /* 畫面交給 onAuthStateChanged 換,這裡不要自己再寫一次 */
+    } catch (e) {
+      setBusy(false);
+      showError(errKeyFor(e && e.code));
+    }
+  };
+
+  $("signOutBtn").onclick = async () => {
+    try { await fb.signOut(auth); } catch (e) { showError("errGeneric"); }
+  };
 }
 
 /* Firebase 的錯誤代碼對應到紙本口氣的句子。沒對到的一律走 errGeneric——
@@ -651,72 +1317,6 @@ function errKeyFor(code){
     case "auth/invalid-api-key":         return "errDomain";
     default:                             return "errGeneric";
   }
-}
-
-/* 先把主題與語言套好,再去載 Firebase。順序反過來的話,存了英文偏好的使用者
-   會先看到一整頁中文,等 CDN 回來才換——而 CDN 慢的時候那是好幾秒 */
-applyTheme();
-applyLanguage(LANG);
-
-if (CONFIGURED) startSignIn();   // 刻意不 await:署名模組慢,不該擋住整頁
-else show("setup");
-
-async function startSignIn(){
-  let fb;
-  try {
-    const [appMod, authMod] = await Promise.all([
-      import(FB_CDN + "/firebase-app.js"),
-      import(FB_CDN + "/firebase-auth.js"),
-    ]);
-    fb = { ...appMod, ...authMod };
-  } catch (e) {
-    /* 連 CDN 都抓不到,署名這件事這次就做不了。把入口關掉並說清楚,
-       不要留一顆按下去沒反應的按鈕 */
-    unavailable = true;
-    setBusy(false);          // 內部會照 unavailable 把按鈕留在停用狀態
-    showError("errOffline");
-    return;
-  }
-  const { initializeApp, getAuth, GoogleAuthProvider, signInWithPopup, signOut,
-          onAuthStateChanged, setPersistence, browserLocalPersistence } = fb;
-
-  const app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  /* 彈出視窗的語言跟著這一頁走(modular SDK 沒有 auth.useDeviceLanguage(),
-     那是 compat 版的方法;這裡直接設 languageCode) */
-  syncAuthLanguage();
-  /* 署名要留到下次打開還在——家長不會想每次進來都簽一遍。
-     瀏覽器不給寫本機儲存(無痕模式之類)時不要讓整頁掛掉,退回只記這一次 */
-  setPersistence(auth, browserLocalPersistence).catch(() => {});
-
-  onAuthStateChanged(auth, user => {
-    currentUser = user;
-    setBusy(false);
-    if (user) { showError(null); renderUser(); show("in"); }
-    else { show("out"); }
-  });
-
-  const provider = new GoogleAuthProvider();
-  /* 同一台裝置上老師與家長可能用不同帳號,每次都讓使用者自己選要用哪一個,
-     不要默默沿用上次那個 */
-  provider.setCustomParameters({ prompt: "select_account" });
-
-  $("signInBtn").onclick = async () => {
-    if (busy) return;
-    showError(null);
-    setBusy(true);
-    try {
-      await signInWithPopup(auth, provider);
-      /* 畫面交給 onAuthStateChanged 換,這裡不要自己再寫一次 */
-    } catch (e) {
-      setBusy(false);
-      showError(errKeyFor(e && e.code));
-    }
-  };
-
-  $("signOutBtn").onclick = async () => {
-    try { await signOut(auth); } catch (e) { showError("errGeneric"); }
-  };
 }
 </script>
 </body>

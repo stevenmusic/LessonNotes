@@ -8,30 +8,49 @@
 
 線上版:<https://stevenmusic.github.io/LessonNotes/>
 
-## 目前這一版
+## 怎麼用
 
-**只有署名(Google 登入)。** 署名之後這一頁會顯示你的名字、聯絡信箱與簿本編號
-(Firebase 的 `displayName` / `email` / `uid`),以及一顆「闔上簿本」。
-課堂紀錄、家裡的練習、上課日與堂數還在寫,首頁上以「接下來要裝訂的幾頁」列著。
+**家長**第一次署名後，先寫上孩子的名字（老師看到的就是這個名字，不是家長的
+Google 顯示名稱）與上課時間，就有了自己的一本簿子。之後進來直接翻到那一頁。
 
-## 設定
+**老師**署名後看到的是**名冊** —— 所有家長建立的簿子，各自顯示孩子的名字、
+上課時間與最後一筆紀錄的日期。點進去就是那個孩子的簿本。
 
-`index.html` 裡的 `firebaseConfig` 已經填好,接的是 Firebase 專案
-`lesson-notes-198e0`。要換專案就換那六個值。
+**簿本裡**是一條時間軸：老師寫的是**課堂紀錄**（帶上課日期，左緣一道金線），
+家長寫的是**回覆**（縮排、虛線框）。兩邊都是即時的 —— 老師寫完，家長那邊
+不用重新整理就看得到。
 
-六個欄位只要有一個還是 `PASTE_HERE`,整頁會換成「簿本還沒裝訂完成」,
-連 Firebase 都不會初始化 —— 與其讓使用者按下去收到 `auth/invalid-api-key`,
-不如直接說還沒設定好。
+名字隨時可以改，家長改自己的，老師都能改。
 
-換專案或重建時要記得的三件事:
+## 角色
 
-1. Firebase 主控台 → 專案設定 → 你的應用程式(Web),把六個值貼進 `firebaseConfig`
-2. Authentication → Sign-in method → 開啟 **Google**
-3. Authentication → Settings → Authorized domains 加入 `stevenmusic.github.io`
-   (本機測試再加 `localhost`)
+老師由 `index.html` 的 `TEACHER_EMAILS` 認定，其他所有署名的人都是家長。
+**那份名單在 `firestore.rules` 裡有一份一模一樣的**，兩邊要一起改 ——
+前端那份只決定畫面長怎樣，真正擋人的是規則那份。
 
-`apiKey` 放在前端是 Firebase 的正常用法,它不是密鑰 —— 部署出去的網頁原始碼裡
-本來就看得到。擋門的是上面第 3 步的網域清單與之後的安全規則。
+## 資料結構
+
+```
+students/{id}
+  name          孩子的名字(家長填,老師也能改)
+  slot          上課時間,選填
+  parentUid     建立這本簿子的家長,不可變更
+  parentName / parentEmail
+  createdAt / lastEntryAt
+
+students/{id}/entries/{id}
+  kind          "lesson"(老師) | "reply"(家長)
+  body          內容
+  date          上課日期,只有 lesson 有
+  authorUid / authorName / authorRole
+  createdAt
+```
+
+家長只讀寫得到 `parentUid == 自己` 的簿子，老師讀寫得到全部。
+家長 A 看不到家長 B 的孩子 —— 規則裡沒有任何一條允許「所有人讀所有東西」。
+
+一個家長目前只用得到一本簿子；資料結構本身沒有這個限制（`parentUid` 查詢
+回傳多筆），要支援一家兩個孩子的話是加一層清單，不用改資料。
 
 ## 技術
 
