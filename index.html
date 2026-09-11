@@ -677,6 +677,7 @@ const I18N = {
     editName: "改名字", saveName: "存起來", cancel: "取消",
     rosterTitle: "名冊",
     rosterCount: "{n} 本簿子",
+    rosterWaitingCount: "{n} 本簿子 · {k} 本在等你回",
     rosterEmpty: "還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。",
     rosterNever: "還沒有任何紀錄",
     rosterLast: "最後一筆 {d}",
@@ -744,6 +745,7 @@ const I18N = {
     editName: "Rename", saveName: "Save", cancel: "Cancel",
     rosterTitle: "The register",
     rosterCount: "{n} notebooks",
+    rosterWaitingCount: "{n} notebooks · {k} waiting for you",
     rosterEmpty: "No family has signed in yet. Once a parent signs in with Google, their name appears here.",
     rosterNever: "Nothing written yet",
     rosterLast: "Last entry {d}",
@@ -972,13 +974,29 @@ function fmtISO(iso){
 /* ══════════════════════════════════════════════════════════════
    5. 名冊
    ══════════════════════════════════════════════════════════════ */
+/* 最後一筆是家長寫的 = 還沒回 */
+function isWaiting(st){
+  return st.lastEntryBy === "parent" && !!(st.lastEntryAt && st.lastEntryAt.toDate);
+}
+
 function renderRoster(){
   const box = $("roster");
   box.textContent = "";
   $("rosterEmpty").hidden = students.length > 0;
-  $("rosterCount").textContent = students.length ? t("rosterCount", { n: students.length }) : "";
 
-  students.forEach(st => {
+  /* 照名字排的話,20 本裡有 3 本在等回覆會散在清單各處,一定會漏。
+     在等回覆的一律排到最前面,其餘維持照名字排,位置才穩定、找得到人 */
+  const list = students.slice().sort((a, b) => {
+    const d = (isWaiting(b) ? 1 : 0) - (isWaiting(a) ? 1 : 0);
+    if (d) return d;
+    return String(a.name || "").localeCompare(String(b.name || ""), LANG === "en" ? "en" : "zh-Hant");
+  });
+  const waiting = list.filter(isWaiting).length;
+  $("rosterCount").textContent = !list.length ? ""
+    : (waiting ? t("rosterWaitingCount", { n: list.length, k: waiting })
+               : t("rosterCount", { n: list.length }));
+
+  list.forEach(st => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "roster-item";
@@ -990,13 +1008,11 @@ function renderRoster(){
     const bits = [];
     if (st.slot) bits.push(st.slot);
     const when = st.lastEntryAt && st.lastEntryAt.toDate ? fmtDate(st.lastEntryAt.toDate()) : null;
-    /* 最後一筆是家長寫的 = 還沒回。這一本要看得出來,不然家長寫了訊息、老師沒翻開
-       那一本,就等於石沉大海 */
-    const waiting = when && st.lastEntryBy === "parent";
-    bits.push(waiting ? t("rosterWaiting", { d: when })
+    const wait = isWaiting(st);
+    bits.push(wait ? t("rosterWaiting", { d: when })
       : (when ? t("rosterLast", { d: when }) : t("rosterNever")));
     sub.textContent = bits.join(" · ");
-    if (waiting) sub.className = "waiting";
+    if (wait) sub.className = "waiting";
     nm.append(strong, sub);
 
     const arw = document.createElement("span");
