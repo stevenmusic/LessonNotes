@@ -1064,18 +1064,26 @@ let editingId = null;     // 正在改寫的那一筆
 let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
 let addingKid = false;    // 家長正在加第二個孩子
 
-/* 刪除的時限。編輯不設限、刪除設限 —— 兩件事的風險不一樣:
-   改錯字是把紀錄變正確,刪掉是讓它消失,而對方可能已經照著做了。
-   老師不受限,他要管理整個工作室的紀錄(含刪掉測試用的簿子)。 */
-const DEL_WINDOW_MIN = 15;
+/* 家長改寫與刪除的時限。老師不受限 —— 需要事後改正的是他(小節數寫錯、
+   譜名打錯,家長已經照著練了還是得改對),而家長那邊寫出去的就是說過的話。
+
+   老師只改得動「自己寫的」那幾筆:刪掉家長誤傳的東西是管理,
+   改掉家長寫的字是替他改口,那是兩回事。 */
+const PARENT_WINDOW_MIN = 15;
 function entryAgeMin(en){
   // serverTimestamp() 還沒回來的時候當成「剛剛」,剛送出的那一筆才刪得掉
   const ts = en.createdAt && en.createdAt.toDate ? en.createdAt.toDate().getTime() : Date.now();
   return (Date.now() - ts) / 60000;
 }
+function inWindow(en){ return entryAgeMin(en) < PARENT_WINDOW_MIN; }
+/* 改:自己寫的。老師隨時,家長限時限內 */
+function canEdit(en){
+  return !!(me && en.authorUid === me.uid && (amTeacher || inWindow(en)));
+}
+/* 刪:老師隨時(含家長那幾筆),家長只能刪自己的、且在時限內 */
 function canDelete(en){
   if (amTeacher) return true;
-  return !!(me && en.authorUid === me.uid && entryAgeMin(en) < DEL_WINDOW_MIN);
+  return !!(me && en.authorUid === me.uid && inWindow(en));
 }
 
 function isTeacherUser(u){
@@ -1307,14 +1315,14 @@ function renderTimeline(){
 
     /* 改與刪:自己寫的那一筆才改得動;老師連家長那筆也刪得掉,
        否則整本簿子(含測試用的)永遠刪不乾淨 */
-    const mine = me && en.authorUid === me.uid;
+    const mine = canEdit(en);
     /* 改過的要看得出來。對方可能已經照著舊的內容做了,悄悄改掉等於讓他對不上 */
     if (en.editedAt) {
       const ed = document.createElement("span");
       ed.textContent = t("edited");
       head.appendChild(ed);
     }
-    if (mine || amTeacher) {
+    if (mine || canDelete(en)) {
       const acts = document.createElement("span");
       acts.className = "entry-acts";
       if (confirmDelId === en.id) {
@@ -1485,10 +1493,14 @@ async function addEntry(text){
   /* 名冊要看得到「最後一筆是什麼時候」,不然老師得一本一本點進去才知道誰還沒寫。
      這一筆失敗不影響剛寫進去的紀錄,所以吞掉不吵使用者 */
   try {
-    await updateDoc(doc(db, "students", current.id), {
+    const patch = {
       lastEntryAt: serverTimestamp(),
       lastEntryBy: amTeacher ? "teacher" : "parent",
-    });
+    };
+    /* 出了作業就要立刻把進度寫上去。等到有人打第一個勾才寫的話,老師剛出完作業
+       回到名冊會看到一片空白 —— 那正是他最想看到「0/3」的時候(踩過) */
+    if (payload.tasks) patch.lastTasks = { d: 0, n: payload.tasks.length };
+    await updateDoc(doc(db, "students", current.id), patch);
   } catch (e) { console.warn("lastEntryAt:", e && e.code); }
 }
 

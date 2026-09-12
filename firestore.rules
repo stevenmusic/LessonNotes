@@ -60,9 +60,13 @@ service cloud.firestore {
                       && (request.resource.data.kind == 'reply' || isTeacher());
 
         /* 改寫:自己寫的那一筆,而且不能把作者或種類換掉 ——
-           不然家長可以把自己的回覆改成「課堂紀錄」 */
+           不然家長可以把自己的回覆改成「課堂紀錄」。
+           老師隨時改得動自己寫的(需要事後改正的是他);家長限 15 分鐘內。
+           老師也改不動家長寫的字 —— 刪掉是管理,改掉是替人改口,兩回事。 */
         allow update: if signedIn()
                       && resource.data.authorUid == request.auth.uid
+                      && (isTeacher()
+                          || request.time < resource.data.createdAt + duration.value(15, 'm'))
                       && request.resource.data.authorUid == resource.data.authorUid
                       && request.resource.data.kind == resource.data.kind
                       && request.resource.data.body is string
@@ -75,9 +79,9 @@ service cloud.firestore {
         allow update: if (isTeacher() || isMyStudent(studentId))
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tasks']);
 
-        /* 刪除:老師不受限(他要管理整個工作室的紀錄);其他人只能刪自己寫的,
-           而且限剛寫完的 15 分鐘內 —— 對方可能已經照著那一筆做了,
-           隔了幾天才讓它消失會讓人對不上。想作廢就用「改」,那會留下「已修改」。
+        /* 刪除:老師不受限(他要管理整個工作室的紀錄,含家長誤傳的東西);
+           家長只能刪自己寫的,而且限剛寫完的 15 分鐘內 —— 對方可能已經照著
+           那一筆做了,隔了幾天才讓它消失會讓人對不上。
            時限在規則裡也擋一次,不然前端不給按只是裝飾 */
         allow delete: if isTeacher()
                       || (signedIn()
