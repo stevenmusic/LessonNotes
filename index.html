@@ -188,6 +188,9 @@ h2.title{
   background-image:repeating-linear-gradient(
     to bottom, transparent 0 29px, var(--rule-line) 29px 30px);
 }
+/* 內頁橫線只留給「整張都是文字」的那幾張(署名、還沒設定好)。
+   輸入框與按鈕壓在橫線上會互相打架,看起來像沒對齊 */
+.sheet--plain .sheet-body{background-image:none}
 .sheet-body > p{font-size:var(--fs-md);color:var(--muted-bright);line-height:30px}
 .sheet-body > p + p{margin-top:30px}
 .fineprint{font-size:var(--fs-sm);color:var(--muted);line-height:1.85;margin-top:16px}
@@ -294,13 +297,27 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 @media (pointer:coarse){ .seg button{padding:11px 16px} }
 
 /* ── 一筆紀錄上的「改 / 刪」───────────────────────── */
-.entry-acts{display:flex;gap:2px;margin-left:auto}
-.entry-acts button{
-  background:none;border:0;padding:4px 7px;cursor:pointer;
-  font-family:inherit;font-size:var(--fs-xs);color:var(--muted);border-radius:5px;
+/* 收在一顆 ⋯ 後面。每一筆都掛著兩顆文字鈕,整個時間軸會被雜訊塞滿,
+   手機上也容易誤按 */
+.more-btn{
+  flex:none;background:none;border:0;padding:2px 6px;margin-right:-4px;cursor:pointer;
+  color:var(--muted);font-size:var(--fs-lg);line-height:1;border-radius:6px;
 }
-.entry-acts button:hover,.entry-acts button:focus-visible{color:var(--gold-bright);outline:none}
-.entry-acts .danger:hover,.entry-acts .danger:focus-visible{color:var(--danger)}
+.more-btn:hover,.more-btn:focus-visible{color:var(--gold-bright);outline:none}
+.more-btn[aria-expanded="true"]{color:var(--gold)}
+.entry-acts{
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
+  margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+}
+.entry-acts button{
+  background:none;border:0;padding:6px 10px;cursor:pointer;
+  font-family:inherit;font-size:var(--fs-sm);color:var(--muted-bright);border-radius:6px;
+}
+.entry-acts button:hover,.entry-acts button:focus-visible{color:var(--gold-bright);background:var(--panel-2);outline:none}
+.entry-acts .danger{color:var(--danger)}
+.entry-acts .danger:hover,.entry-acts .danger:focus-visible{color:var(--danger);background:var(--panel-2)}
+.entry-acts .q{font-size:var(--fs-sm);color:var(--ivory);padding:6px 4px}
+@media (pointer:coarse){ .more-btn{padding:6px 10px} .entry-acts button{padding:9px 12px} }
 .entry-edit{display:grid;gap:8px}
 .entry-edit textarea{min-height:80px}
 .entry-edit .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -409,25 +426,59 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .roster-item .arw svg{width:16px;height:16px;display:block}
 
 /* ── 時間軸 ───────────────────────── */
-.timeline{display:grid;gap:14px;margin-bottom:26px}
+.timeline{display:grid;gap:10px;margin-bottom:26px}
+
+/* 日期分隔線。簿本一長,沒有這個就只剩一堆卡片,看不出哪些是同一天的事 */
+.day-sep{
+  display:flex;align-items:center;gap:12px;
+  margin:14px 2px 4px;
+  font-size:var(--fs-xs);color:var(--muted);letter-spacing:.1em;
+}
+.day-sep::before,.day-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.timeline .day-sep:first-child{margin-top:0}
+
 .entry{
   border:1px solid var(--line);border-radius:var(--radius-md);
-  padding:14px 16px;background:var(--panel);
+  padding:13px 15px;background:var(--panel);
 }
 /* 老師的課堂紀錄:左緣一道金線,是這本簿子的主體 */
 .entry--lesson{border-left:3px solid var(--gold-edge)}
-/* 家長的回覆:縮排 + 沒有底色,讀起來像寫在旁邊的一句話,不跟課堂紀錄搶 */
+/* 家長寫的:縮排 + 沒有底色,讀起來像寫在旁邊的一句話,不跟課堂紀錄搶 */
 .entry--reply{
   background:transparent;border-style:dashed;
-  margin-left:clamp(14px, 5vw, 34px);
+  margin-left:clamp(12px, 4vw, 28px);
 }
+
 .entry-head{
-  display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin-bottom:8px;
-  font-size:var(--fs-xs);color:var(--muted);letter-spacing:.04em;
+  display:flex;align-items:center;gap:8px;margin-bottom:9px;
+  font-size:var(--fs-xs);color:var(--muted);
 }
-.entry-head .who{color:var(--muted-bright);font-weight:500}
-.entry-head .kind{color:var(--gold)}
-.entry-body{font-size:var(--fs-md);color:var(--ivory);line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+/* 頭像:沒有 Google 大頭貼就用名字的第一個字。一眼分得出誰寫的,
+   比一整排小字快得多 */
+.ava{
+  width:26px;height:26px;flex:none;border-radius:50%;
+  display:grid;place-items:center;overflow:hidden;
+  font-size:var(--fs-xs);font-weight:700;letter-spacing:0;
+  background:var(--panel-2);border:1px solid var(--line);color:var(--muted-bright);
+}
+.ava img{width:100%;height:100%;object-fit:cover;display:block}
+.entry--lesson .ava{background:var(--gold);border-color:var(--gold);color:var(--bg)}
+.entry-head .who{
+  color:var(--ivory);font-weight:500;font-size:var(--fs-sm);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+}
+.entry-head .kind{
+  flex:none;color:var(--gold);border:1px solid var(--line);
+  border-radius:var(--radius-pill);padding:2px 8px;font-size:var(--fs-2xs);
+}
+.entry-head .when{flex:none;margin-left:auto;font-variant-numeric:tabular-nums}
+.entry-head .edited{flex:none;font-style:italic;opacity:.85}
+@media (max-width:380px){ .entry-head .kind{display:none} }
+
+.entry-body{
+  font-size:var(--fs-md);color:var(--ivory);line-height:1.85;
+  white-space:pre-wrap;overflow-wrap:anywhere;
+}
 .entry--reply .entry-body{color:var(--muted-bright)}
 
 .empty{
@@ -574,7 +625,7 @@ footer{
   </section>
 
   <!-- ══ 家長第一次進來:寫上孩子的名字 ══ -->
-  <section class="sheet" id="viewNaming" hidden>
+  <section class="sheet sheet--plain" id="viewNaming" hidden>
     <div class="sheet-head">
       <span class="mark">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 10h5M12 14h3"/></svg>
@@ -617,8 +668,10 @@ footer{
     <div class="rule"></div>
     <div class="roster" id="roster"></div>
     <div class="empty" id="rosterEmpty" hidden data-i18n="rosterEmpty">還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。</div>
-    <div class="form-actions" id="addKidRow" hidden style="margin-top:16px">
-      <button class="btn" type="button" id="addKidBtn" data-i18n="addKid">加一個孩子</button>
+    <div class="form-actions" style="margin-top:16px">
+      <button class="btn" type="button" id="addKidBtn" hidden data-i18n="addKid">加一個孩子</button>
+      <span style="flex:1"></span>
+      <button class="btn ghost small" type="button" id="archToggle" hidden></button>
     </div>
   </section>
 
@@ -636,7 +689,7 @@ footer{
     </div>
     <div class="rule"></div>
 
-    <section class="sheet" id="renameBox" hidden>
+    <section class="sheet sheet--plain" id="renameBox" hidden>
       <div class="sheet-body">
         <form id="renameForm" novalidate>
           <div class="field-row">
@@ -651,7 +704,7 @@ footer{
             <button class="btn primary" type="submit" id="renameSaveBtn" data-i18n="saveName">存起來</button>
             <button class="btn ghost" type="button" id="renameCancelBtn" data-i18n="cancel">取消</button>
             <span style="flex:1"></span>
-            <button class="btn ghost" type="button" id="dropBookBtn" hidden data-i18n="dropBook">刪掉這本簿子</button>
+            <button class="btn ghost" type="button" id="archiveBtn" data-i18n="archiveBook">封存這本簿子</button>
           </div>
         </form>
         <div class="slip warn" id="renameErr" hidden>
@@ -664,7 +717,7 @@ footer{
     <div class="timeline" id="timeline"></div>
     <div class="empty" id="nbEmpty" hidden></div>
 
-    <section class="sheet" id="composer">
+    <section class="sheet sheet--plain" id="composer">
       <div class="sheet-head">
         <span class="mark">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13h5"/></svg>
@@ -832,7 +885,9 @@ const I18N = {
     tasksTitle: "這週要練的", tasksCount: "{d} / {n}", tasksAllDone: "全部練完了",
     rosterTasks: "作業 {d}/{n}",
     myKids: "我的孩子", addKid: "加一個孩子",
-    dropBook: "刪掉這本簿子", dropBookConfirm: "整本刪掉？裡面的紀錄與錄音都會不見。",
+    archiveBook: "封存這本簿子", unarchiveBook: "取回這本簿子",
+    archiveConfirm: "封存這本簿子？它會從名冊上收起來，紀錄都留著，隨時可以取回。",
+    archivedTag: "已封存", showArchived: "顯示已封存的（{n}）", hideArchived: "收起已封存的",
     errDel: "刪不掉。重新整理這一頁再試一次。",
     recStart: "錄一段", recVideo: "錄一段影片", recStop: "停下來",
     addPhoto: "加一張照片", attachRemove: "移除",
@@ -848,7 +903,7 @@ const I18N = {
     errMediaLoad: "拿不出來。重新整理這一頁再試一次。",
     errCam: "拿不到相機。請在瀏覽器允許這個網站錄影。",
     errNoStorage: "影片需要先在 Firebase 開啟 Storage（要 Blaze 方案）。錄音和照片不受影響，現在就能用。",
-    justNow: "剛剛",
+    justNow: "剛剛", today: "今天", yesterday: "昨天", lessonOn: "上課 {d}", more: "更多",
     /* 錯誤訊息也照紙本的口氣寫。Firebase 的 code 一律不顯示在畫面上 */
     errClosed: "那扇窗被關上了，還沒署名。要再試一次嗎？",
     errBlocked: "瀏覽器把那扇窗擋住了。允許這個網站開啟視窗之後再試一次。",
@@ -923,7 +978,9 @@ const I18N = {
     tasksTitle: "To practise this week", tasksCount: "{d} / {n}", tasksAllDone: "All done",
     rosterTasks: "Practice {d}/{n}",
     myKids: "My children", addKid: "Add a child",
-    dropBook: "Delete this notebook", dropBookConfirm: "Delete the whole notebook? Every entry and recording goes with it.",
+    archiveBook: "Archive this notebook", unarchiveBook: "Bring it back",
+    archiveConfirm: "Archive this notebook? It leaves the register but every entry is kept, and you can bring it back any time.",
+    archivedTag: "Archived", showArchived: "Show archived ({n})", hideArchived: "Hide archived",
     errDel: "Couldn't delete it. Reload the page and try again.",
     recStart: "Record", recVideo: "Record video", recStop: "Stop",
     addPhoto: "Add a photo", attachRemove: "Remove",
@@ -939,7 +996,7 @@ const I18N = {
     errMediaLoad: "Couldn't fetch it. Reload the page and try again.",
     errCam: "No camera. Please allow this site to record video.",
     errNoStorage: "Video needs Firebase Storage enabled (Blaze plan). Audio and photos are unaffected and work now.",
-    justNow: "just now",
+    justNow: "just now", today: "Today", yesterday: "Yesterday", lessonOn: "Lesson {d}", more: "More",
     errClosed: "That window was closed before you signed. Try again?",
     errBlocked: "The browser blocked that window. Allow pop-ups for this site and try again.",
     errNetwork: "Couldn't reach the other side — the connection looks down. Check it and try again.",
@@ -1062,13 +1119,15 @@ let stopStudents = null;
 let teacherKind = "lesson";
 let editingId = null;     // 正在改寫的那一筆
 let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
+let openActsId = null;    // 哪一筆的 ⋯ 是打開的
 let addingKid = false;    // 家長正在加第二個孩子
+let showArchived = false; // 名冊上要不要把封存的也列出來
 
 /* 家長改寫與刪除的時限。老師不受限 —— 需要事後改正的是他(小節數寫錯、
    譜名打錯,家長已經照著練了還是得改對),而家長那邊寫出去的就是說過的話。
 
-   老師只改得動「自己寫的」那幾筆:刪掉家長誤傳的東西是管理,
-   改掉家長寫的字是替他改口,那是兩回事。 */
+   **誰都碰不到別人寫的東西,老師也一樣。** 家長的請假、回報、申訴是他自己的
+   紀錄,不該被另一方修改或抹掉。所以簿本也不能整本刪 —— 「不要了」走封存。 */
 const PARENT_WINDOW_MIN = 15;
 function entryAgeMin(en){
   // serverTimestamp() 還沒回來的時候當成「剛剛」,剛送出的那一筆才刪得掉
@@ -1080,10 +1139,9 @@ function inWindow(en){ return entryAgeMin(en) < PARENT_WINDOW_MIN; }
 function canEdit(en){
   return !!(me && en.authorUid === me.uid && (amTeacher || inWindow(en)));
 }
-/* 刪:老師隨時(含家長那幾筆),家長只能刪自己的、且在時限內 */
+/* 刪:只有自己寫的。老師隨時,家長限時限內 */
 function canDelete(en){
-  if (amTeacher) return true;
-  return !!(me && en.authorUid === me.uid && inWindow(en));
+  return !!(me && en.authorUid === me.uid && (amTeacher || inWindow(en)));
 }
 
 function isTeacherUser(u){
@@ -1175,6 +1233,32 @@ function fmtDate(d){
       { year: "numeric", month: "short", day: "numeric" });
   } catch (e) { return d.toISOString().slice(0, 10); }
 }
+/* 今天的只給時分、昨天說「昨天」、更早給日期 —— 通訊軟體都是這樣,
+   因為「今天 14:32」比「2026年9月12日」好用得多 */
+function dayKey(d){ return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); }
+function dayLabel(d){
+  const now = new Date();
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (dayKey(d) === dayKey(now)) return t("today");
+  if (dayKey(d) === dayKey(y)) return t("yesterday");
+  return fmtDate(d);
+}
+function fmtClock(d){
+  try {
+    return d.toLocaleTimeString(LANG === "en" ? "en-GB" : "zh-TW",
+      { hour: "2-digit", minute: "2-digit", hour12: false });
+  } catch (e) { return ""; }
+}
+function fmtWhen(ts){
+  if (!ts || typeof ts.toDate !== "function") return t("justNow");
+  const d = ts.toDate();
+  const now = new Date();
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if (dayKey(d) === dayKey(now)) return fmtClock(d);
+  if (dayKey(d) === dayKey(y)) return t("yesterday") + " " + fmtClock(d);
+  return fmtDate(d);
+}
+
 function fmtISO(iso){
   if (!iso) return "";
   const parts = String(iso).split("-");
@@ -1188,17 +1272,26 @@ function fmtISO(iso){
    ══════════════════════════════════════════════════════════════ */
 /* 最後一筆是家長寫的 = 還沒回 */
 function isWaiting(st){
+  if (st.archived) return false;   // 封存的不算在「在等你回」裡面
   return st.lastEntryBy === "parent" && !!(st.lastEntryAt && st.lastEntryAt.toDate);
 }
 
 function renderRoster(){
   const box = $("roster");
   box.textContent = "";
-  $("rosterEmpty").hidden = students.length > 0;
+
+  /* 封存的預設收起來。名冊要一眼看完在等誰,已經不上課的學生混在裡面就失去意義了 */
+  const archived = students.filter(x => x.archived);
+  const live = students.filter(x => !x.archived);
+  const shown = showArchived ? students : live;
+  const tog = $("archToggle");
+  tog.hidden = !archived.length;
+  tog.textContent = showArchived ? t("hideArchived") : t("showArchived", { n: archived.length });
+  $("rosterEmpty").hidden = shown.length > 0;
 
   /* 照名字排的話,20 本裡有 3 本在等回覆會散在清單各處,一定會漏。
      在等回覆的一律排到最前面,其餘維持照名字排,位置才穩定、找得到人 */
-  const list = students.slice().sort((a, b) => {
+  const list = shown.slice().sort((a, b) => {
     const d = (isWaiting(b) ? 1 : 0) - (isWaiting(a) ? 1 : 0);
     if (d) return d;
     return String(a.name || "").localeCompare(String(b.name || ""), LANG === "en" ? "en" : "zh-Hant");
@@ -1209,7 +1302,7 @@ function renderRoster(){
                : t("rosterCount", { n: list.length }));
   // 家長只有在不只一個孩子時才會看到這一頁,標題與按鈕都要換成家長的說法
   document.querySelector('#viewRoster h2').textContent = amTeacher ? t("rosterTitle") : t("myKids");
-  $("addKidRow").hidden = amTeacher;
+  $("addKidBtn").hidden = amTeacher;
   renderWhoBar();
 
   list.forEach(st => {
@@ -1230,6 +1323,7 @@ function renderRoster(){
     // 最新一次作業的進度,不用點進去就看得到誰還沒練完
     const lt = st.lastTasks;
     if (lt && lt.n) bits.push(t("rosterTasks", { d: lt.d, n: lt.n }));
+    if (st.archived) bits.unshift(t("archivedTag"));
     sub.textContent = bits.join(" · ");
     if (wait) sub.className = "waiting";
     else if (lt && lt.n && lt.d < lt.n) sub.className = "tasks-left";
@@ -1252,8 +1346,11 @@ function renderNotebookHead(){
   if (!current) return;
   $("nbName").textContent = current.name || t("nameEmpty");
   const slot = $("nbSlot");
-  slot.textContent = current.slot || "";
-  slot.hidden = !current.slot;
+  const bits = [];
+  if (current.archived) bits.push(t("archivedTag"));
+  if (current.slot) bits.push(current.slot);
+  slot.textContent = bits.join(" · ");
+  slot.hidden = !bits.length;
   // 老師一律從名冊進來;家長只有在不只一個孩子時才有清單可回
   $("backBtn").hidden = !(amTeacher || students.length > 1);
 }
@@ -1289,67 +1386,84 @@ function renderTimeline(){
   }
   empty.hidden = true;
 
+  let lastDay = null;
   entries.forEach(en => {
+    /* 日期分隔線:同一天的事收在一起。分隔線與時間都用「寫下來的時間」,
+       課堂紀錄自己的上課日期另外標成一顆晶片,兩者不要混在一起 */
+    const when = en.createdAt && en.createdAt.toDate ? en.createdAt.toDate() : new Date();
+    const key = dayKey(when);
+    if (key !== lastDay) {
+      lastDay = key;
+      const sep = document.createElement("div");
+      sep.className = "day-sep";
+      const sp = document.createElement("span");
+      sp.textContent = dayLabel(when);
+      sep.appendChild(sp);
+      box.appendChild(sep);
+    }
+
     const art = document.createElement("article");
     art.className = "entry entry--" + (en.kind === "lesson" ? "lesson" : "reply");
 
     const head = document.createElement("div");
     head.className = "entry-head";
-    const kind = document.createElement("span");
-    kind.className = "kind";
-    kind.textContent = en.kind === "lesson" ? t("kindLesson")
-    : (en.authorRole === "teacher" ? t("kindTeacherReply") : t("kindReply"));
-    const who = document.createElement("span");
-    who.className = "who";
-    /* 家長那一筆顯示「{孩子}的家長」,不用 Google 帳號的顯示名稱 ——
-       老師的名冊上二十個家長各自叫什麼英文名字,對不上是哪個學生。
-       這裡刻意「每次重畫時現算」而不是寫進資料:改了孩子的名字之後,
-       以前的紀錄也要跟著改口,不能留著舊名字 */
-    who.textContent = en.authorRole === "teacher"
+
+    const teacherSide = en.authorRole === "teacher";
+    const name = teacherSide
       ? (en.authorName || t("roleTeacher"))
       : t("parentOf", { name: (current && current.name) || t("roleParent") });
-    const when = document.createElement("span");
-    // 課堂紀錄顯示老師填的上課日期,回覆顯示寫下的時間
-    when.textContent = en.kind === "lesson" && en.date ? fmtISO(en.date) : stamp(en.createdAt);
-    head.append(kind, who, when);
 
-    /* 改與刪:自己寫的那一筆才改得動;老師連家長那筆也刪得掉,
-       否則整本簿子(含測試用的)永遠刪不乾淨 */
-    const mine = canEdit(en);
-    /* 改過的要看得出來。對方可能已經照著舊的內容做了,悄悄改掉等於讓他對不上 */
+    /* 頭像:老師用自己的大頭貼(只有一位,認得出來),家長一律用孩子名字的第一個字 —— 
+       家長的 Google 大頭貼跟孩子對不起來,反而更難認 */
+    const ava = document.createElement("span");
+    ava.className = "ava";
+    if (teacherSide && me && amTeacher && me.photoURL && en.authorUid === me.uid) {
+      const im = document.createElement("img");
+      im.src = me.photoURL; im.alt = ""; im.referrerPolicy = "no-referrer";
+      ava.appendChild(im);
+    } else {
+      ava.textContent = (name || "?").trim().charAt(0);
+    }
+
+    const who = document.createElement("span");
+    who.className = "who";
+    who.textContent = name;
+
+    const kind = document.createElement("span");
+    kind.className = "kind";
+    kind.textContent = en.kind === "lesson"
+      ? (en.date ? t("lessonOn", { d: fmtISO(en.date) }) : t("kindLesson"))
+      : (teacherSide ? t("kindTeacherReply") : t("kindReply"));
+
+    head.append(ava, who, kind);
+
     if (en.editedAt) {
       const ed = document.createElement("span");
+      ed.className = "edited";
       ed.textContent = t("edited");
       head.appendChild(ed);
     }
-    if (mine || canDelete(en)) {
-      const acts = document.createElement("span");
-      acts.className = "entry-acts";
-      if (confirmDelId === en.id) {
-        const q = document.createElement("span");
-        q.textContent = t("delConfirm");
-        const yes = document.createElement("button");
-        yes.type = "button"; yes.className = "danger"; yes.textContent = t("delYes");
-        yes.onclick = () => removeEntry(en);
-        const no = document.createElement("button");
-        no.type = "button"; no.textContent = t("cancel");
-        no.onclick = () => { confirmDelId = null; renderTimeline(); };
-        acts.append(q, yes, no);
-      } else {
-        if (mine) {
-          const ed = document.createElement("button");
-          ed.type = "button"; ed.textContent = t("editEntry");
-          ed.onclick = () => { editingId = en.id; confirmDelId = null; renderTimeline(); };
-          acts.appendChild(ed);
-        }
-        if (canDelete(en)) {
-          const del = document.createElement("button");
-          del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
-          del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
-          acts.appendChild(del);
-        }
-      }
-      head.appendChild(acts);
+
+    const tm = document.createElement("span");
+    tm.className = "when";
+    tm.textContent = fmtWhen(en.createdAt);
+    head.appendChild(tm);
+
+    /* 改與刪收在一顆 ⋯ 後面。只有動得了的人才看得到那顆鈕 */
+    const mine = canEdit(en), able = canDelete(en);
+    if (mine || able) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "more-btn";
+      more.textContent = "\u22EF";
+      more.setAttribute("aria-label", t("more"));
+      more.setAttribute("aria-expanded", String(openActsId === en.id));
+      more.onclick = () => {
+        openActsId = openActsId === en.id ? null : en.id;
+        confirmDelId = null;
+        renderTimeline();
+      };
+      head.appendChild(more);
     }
 
     art.appendChild(head);
@@ -1365,6 +1479,36 @@ function renderTimeline(){
       if (tk) art.appendChild(tk);
       const att = attachNode(en, current.id);
       if (att) art.appendChild(att);
+
+      if (openActsId === en.id && (mine || able)) {
+        const acts = document.createElement("div");
+        acts.className = "entry-acts";
+        if (confirmDelId === en.id) {
+          const q = document.createElement("span");
+          q.className = "q"; q.textContent = t("delConfirm");
+          const yes = document.createElement("button");
+          yes.type = "button"; yes.className = "danger"; yes.textContent = t("delYes");
+          yes.onclick = () => { openActsId = null; removeEntry(en); };
+          const no = document.createElement("button");
+          no.type = "button"; no.textContent = t("cancel");
+          no.onclick = () => { confirmDelId = null; renderTimeline(); };
+          acts.append(q, yes, no);
+        } else {
+          if (mine) {
+            const ed = document.createElement("button");
+            ed.type = "button"; ed.textContent = t("editEntry");
+            ed.onclick = () => { editingId = en.id; openActsId = null; confirmDelId = null; renderTimeline(); };
+            acts.appendChild(ed);
+          }
+          if (able) {
+            const del = document.createElement("button");
+            del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
+            del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
+            acts.appendChild(del);
+          }
+        }
+        art.appendChild(acts);
+      }
     }
     box.appendChild(art);
   });
@@ -1399,7 +1543,8 @@ function watchStudents(){
       if (keep) { current = keep; renderNotebookHead(); renderRoster(); return; }
       /* 只有一個孩子就直接翻開那一本(最常見);不只一個才給清單,
          省掉單一孩子的家長每次都要多點一下 */
-      if (students.length === 1 && !addingKid) { openNotebook(students[0].id); return; }
+      const live = students.filter(x => !x.archived);
+      if (live.length === 1 && !addingKid) { openNotebook(live[0].id); return; }
       renderRoster();
       if (!addingKid) show("roster");
       return;
@@ -1425,7 +1570,7 @@ function openNotebook(id){
   if (!st) return;
   current = st;
   entries = [];
-  editingId = null; confirmDelId = null;
+  editingId = null; confirmDelId = null; openActsId = null;
   renderNotebookHead();
   renderComposer();
   renderTimeline();
@@ -1959,7 +2104,7 @@ $("editNameBtn").onclick = () => {
   const box = $("renameBox");
   const open = box.hidden;
   box.hidden = !open;
-  $("dropBookBtn").hidden = !amTeacher;
+  $("archiveBtn").textContent = current && current.archived ? t("unarchiveBook") : t("archiveBook");
   if (open && current) {
     $("renameInput").value = current.name || "";
     $("reslotInput").value = current.slot || "";
@@ -1969,33 +2114,27 @@ $("editNameBtn").onclick = () => {
 };
 $("renameCancelBtn").onclick = () => { $("renameBox").hidden = true; };
 
-/* 刪掉整本。Firestore 刪父文件不會連子集合一起刪,所以要自己把 entries 與
-   media 一筆一筆收掉,不然那些資料會變成永遠讀不到、也刪不掉的孤兒 */
-$("dropBookBtn").onclick = async () => {
-  if (!current || !amTeacher) return;
-  if (!window.confirm(t("dropBookConfirm"))) return;
-  const btn = $("dropBookBtn");
+/* 封存,不是刪除。紀錄只有作者本人刪得掉(老師也一樣),所以整本刪一定會留下
+   讀不到也刪不掉的孤兒。封存把它從名冊上收起來,資料原封不動,隨時取得回來。
+   老師與這本簿子的家長都按得動 —— 家長手滑建了兩本時也收得掉 */
+$("archiveBtn").onclick = async () => {
+  if (!current) return;
+  const on = !current.archived;
+  if (on && !window.confirm(t("archiveConfirm"))) return;
+  const btn = $("archiveBtn");
   btn.disabled = true;
-  const sid = current.id;
   try {
-    const snap = await fb.getDocs(fb.collection(db, "students", sid, "entries"));
-    for (const d of snap.docs) {
-      const m = d.data().media;
-      if (m && m.where === "inline") {
-        try { await fb.deleteDoc(fb.doc(db, "students", sid, "media", d.id)); } catch (e) {}
-      }
-      if (m && m.where === "storage" && m.path && storage) {
-        try { await fb.deleteObject(fb.ref(storage, m.path)); } catch (e) {}
-      }
-      await fb.deleteDoc(fb.doc(db, "students", sid, "entries", d.id));
-    }
-    await fb.deleteDoc(fb.doc(db, "students", sid));
-    if (stopEntries) { stopEntries(); stopEntries = null; }
-    current = null; entries = [];
+    await fb.updateDoc(fb.doc(db, "students", current.id), { archived: on });
+    current.archived = on;
     $("renameBox").hidden = true;
-    show("roster");
+    if (on) {
+      if (stopEntries) { stopEntries(); stopEntries = null; }
+      current = null; entries = [];
+      renderRoster();
+      show("roster");
+    } else { renderNotebookHead(); }
   } catch (e) {
-    console.warn("dropBook:", e && e.code, e && e.message);
+    console.warn("archive:", e && e.code, e && e.message);
     slipMsg("renameErr", "renameErrText", "errDel");
   } finally { btn.disabled = false; }
 };
@@ -2053,6 +2192,8 @@ $("sendBtn").onclick = async () => {
 document.querySelectorAll("#kindSeg button").forEach(b => {
   b.onclick = () => { teacherKind = b.dataset.kind; renderComposer(); };
 });
+
+$("archToggle").onclick = () => { showArchived = !showArchived; renderRoster(); };
 
 $("addKidBtn").onclick = () => {
   addingKid = true;

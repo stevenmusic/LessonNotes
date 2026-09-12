@@ -35,9 +35,8 @@ service firebase.storage {
       allow update: if false;
 
       /* 刪掉紀錄時影片要一起收掉。上傳時會把 authorUid 寫進 metadata,
-         這裡靠它認出是不是自己傳的;老師一律刪得動 */
-      allow delete: if isTeacher()
-                    || (signedIn() && resource.metadata.authorUid == request.auth.uid);
+         這裡靠它認出是不是自己傳的。只有傳的人自己收得回,老師也不行 */
+      allow delete: if signedIn() && resource.metadata.authorUid == request.auth.uid;
     }
 
     // 上面沒列到的路徑一律擋掉

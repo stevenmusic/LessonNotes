@@ -46,7 +46,10 @@ service cloud.firestore {
                     && request.resource.data.name.size() > 0
                     && request.resource.data.name.size() <= 40;
 
-      allow delete: if isTeacher();
+      /* 簿本不給刪。刪父文件不會連子集合一起刪,而 entries 現在只有作者本人
+         刪得掉 —— 整本刪掉一定會留下一堆讀不到也刪不掉的孤兒。
+         「不要了」的簿本改成封存(archived),資料留著,只是不在名冊上。 */
+      allow delete: if false;
 
       match /entries/{entryId} {
         allow read:   if isTeacher() || isMyStudent(studentId);
@@ -62,7 +65,7 @@ service cloud.firestore {
         /* 改寫:自己寫的那一筆,而且不能把作者或種類換掉 ——
            不然家長可以把自己的回覆改成「課堂紀錄」。
            老師隨時改得動自己寫的(需要事後改正的是他);家長限 15 分鐘內。
-           老師也改不動家長寫的字 —— 刪掉是管理,改掉是替人改口,兩回事。 */
+           **誰都改不動別人寫的字**,老師也一樣。 */
         allow update: if signedIn()
                       && resource.data.authorUid == request.auth.uid
                       && (isTeacher()
@@ -79,14 +82,16 @@ service cloud.firestore {
         allow update: if (isTeacher() || isMyStudent(studentId))
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tasks']);
 
-        /* 刪除:老師不受限(他要管理整個工作室的紀錄,含家長誤傳的東西);
-           家長只能刪自己寫的,而且限剛寫完的 15 分鐘內 —— 對方可能已經照著
-           那一筆做了,隔了幾天才讓它消失會讓人對不上。
-           時限在規則裡也擋一次,不然前端不給按只是裝飾 */
-        allow delete: if isTeacher()
-                      || (signedIn()
-                          && resource.data.authorUid == request.auth.uid
-                          && request.time < resource.data.createdAt + duration.value(15, 'm'));
+        /* 刪除:**只有寫的人自己**。老師也刪不掉家長寫的東西 ——
+           家長的請假、回報、申訴是他自己的紀錄,不該被另一方抹掉。
+           老師不受時限(自己寫的隨時收得回),家長限 15 分鐘內。
+
+           代價是簿本不能整本刪掉(刪父文件會留下刪不掉的子集合),
+           所以「不要了」的簿本走封存(students.archived),不是刪除。 */
+        allow delete: if signedIn()
+                      && resource.data.authorUid == request.auth.uid
+                      && (isTeacher()
+                          || request.time < resource.data.createdAt + duration.value(15, 'm'));
       }
 
       /* 錄音與照片的位元組。刻意跟 entries 分開放:時間軸一次讀 50 筆,
@@ -101,8 +106,8 @@ service cloud.firestore {
                       // Firestore 單筆上限 1 MiB,留一點給其他欄位
                       && request.resource.data.data.size() <= 900000;
         allow update: if false;   // 附件不給改,要換就刪掉重寫一筆
-        // 刪掉紀錄時附件要一起收掉,所以老師也要刪得動
-        allow delete: if isTeacher() || (signedIn() && resource.data.authorUid == request.auth.uid);
+        // 跟紀錄同一條線:只有傳的人自己收得回
+        allow delete: if signedIn() && resource.data.authorUid == request.auth.uid;
       }
     }
 
