@@ -296,19 +296,45 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .seg button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:1px}
 @media (pointer:coarse){ .seg button{padding:11px 16px} }
 
+/* ── 輸入框:釘在畫面底部,收合時只有一條 ──
+   通訊軟體的輸入框永遠在手邊。原本擺在時間軸最下面,簿本一長就得捲到底才寫得了字。
+   展開的完整表單(上課日期、作業、附件)很高,所以預設收成一條,點了才長出來 */
+#composer{
+  position:sticky;bottom:0;z-index:12;margin-top:10px;
+  background:var(--panel);
+  box-shadow:0 -12px 24px -14px rgba(0,0,0,.45);
+}
+body.light #composer{box-shadow:0 -12px 24px -14px rgba(90,72,30,.28)}
+.composer-bar{
+  display:flex;align-items:center;gap:10px;width:100%;
+  background:none;border:0;padding:14px 16px;cursor:text;
+  font-family:inherit;font-size:var(--fs-lg);color:var(--muted);text-align:left;
+}
+.composer-bar svg{width:19px;height:19px;flex:none;color:var(--gold)}
+.composer-bar .ph{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#composer.is-open .composer-bar{display:none}
+#composer:not(.is-open) .sheet-head,
+#composer:not(.is-open) .sheet-body{display:none}
+.composer-close{
+  margin-left:auto;background:none;border:0;cursor:pointer;
+  color:var(--muted);font-family:inherit;font-size:var(--fs-sm);padding:6px 8px;border-radius:6px;
+}
+.composer-close:hover,.composer-close:focus-visible{color:var(--gold-bright);outline:none}
+@media (pointer:coarse){ .composer-bar{padding:16px} }
+
 /* ── 一筆紀錄上的「改 / 刪」───────────────────────── */
 /* 收在一顆 ⋯ 後面。每一筆都掛著兩顆文字鈕,整個時間軸會被雜訊塞滿,
    手機上也容易誤按 */
 .more-btn{
-  flex:none;background:none;border:0;padding:2px 6px;margin-right:-4px;cursor:pointer;
-  color:var(--muted);font-size:var(--fs-lg);line-height:1;border-radius:6px;
+  flex:none;background:none;border:0;padding:0 4px;cursor:pointer;
+  color:var(--muted);font-size:var(--fs-md);line-height:1;border-radius:6px;
 }
 .more-btn:hover,.more-btn:focus-visible{color:var(--gold-bright);outline:none}
 .more-btn[aria-expanded="true"]{color:var(--gold)}
 .entry-acts{
-  display:flex;flex-wrap:wrap;align-items:center;gap:4px;
-  margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:4px 0 0;
 }
+.row--out .entry-acts{justify-content:flex-end}
 .entry-acts button{
   background:none;border:0;padding:6px 10px;cursor:pointer;
   font-family:inherit;font-size:var(--fs-sm);color:var(--muted-bright);border-radius:6px;
@@ -437,49 +463,58 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .day-sep::before,.day-sep::after{content:"";flex:1;height:1px;background:var(--line)}
 .timeline .day-sep:first-child{margin-top:0}
 
-.entry{
-  border:1px solid var(--line);border-radius:var(--radius-md);
-  padding:13px 15px;background:var(--panel);
-}
-/* 老師的課堂紀錄:左緣一道金線,是這本簿子的主體 */
-.entry--lesson{border-left:3px solid var(--gold-edge)}
-/* 家長寫的:縮排 + 沒有底色,讀起來像寫在旁邊的一句話,不跟課堂紀錄搶 */
-.entry--reply{
-  background:transparent;border-style:dashed;
-  margin-left:clamp(12px, 4vw, 28px);
-}
+/* ── 對話泡泡 ──
+   自己寫的靠右、對方寫的靠左。「自己」是看的人自己,所以判斷用 authorUid 而不是角色:
+   老師看的時候他的課堂紀錄在右邊,家長看同一本簿子時那幾筆在左邊。 */
+.row{display:flex;gap:8px;align-items:flex-end}
+.row--out{flex-direction:row-reverse}
+.col{display:flex;flex-direction:column;min-width:0;max-width:86%}
+.row--out .col{align-items:flex-end}
+@media (max-width:380px){ .col{max-width:92%} }
 
-.entry-head{
-  display:flex;align-items:center;gap:8px;margin-bottom:9px;
-  font-size:var(--fs-xs);color:var(--muted);
-}
-/* 頭像:沒有 Google 大頭貼就用名字的第一個字。一眼分得出誰寫的,
-   比一整排小字快得多 */
+/* 頭像:沒有大頭貼就用名字的第一個字。只在對方那一側出現 —— 自己是誰不必告訴自己 */
 .ava{
-  width:26px;height:26px;flex:none;border-radius:50%;
+  width:28px;height:28px;flex:none;border-radius:50%;margin-bottom:19px;
   display:grid;place-items:center;overflow:hidden;
   font-size:var(--fs-xs);font-weight:700;letter-spacing:0;
   background:var(--panel-2);border:1px solid var(--line);color:var(--muted-bright);
 }
 .ava img{width:100%;height:100%;object-fit:cover;display:block}
-.entry--lesson .ava{background:var(--gold);border-color:var(--gold);color:var(--bg)}
-.entry-head .who{
-  color:var(--ivory);font-weight:500;font-size:var(--fs-sm);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
-}
-.entry-head .kind{
-  flex:none;color:var(--gold);border:1px solid var(--line);
-  border-radius:var(--radius-pill);padding:2px 8px;font-size:var(--fs-2xs);
-}
-.entry-head .when{flex:none;margin-left:auto;font-variant-numeric:tabular-nums}
-.entry-head .edited{flex:none;font-style:italic;opacity:.85}
-@media (max-width:380px){ .entry-head .kind{display:none} }
+.ava--teacher{background:var(--gold);border-color:var(--gold);color:var(--bg)}
 
+.col > .name{
+  font-size:var(--fs-xs);color:var(--muted);margin:0 4px 4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+
+.bubble{
+  border-radius:var(--radius-md);padding:11px 14px;
+  background:var(--panel);border:1px solid var(--line);min-width:0;
+}
+/* 泡泡靠自己那一側的下角收起來,方向一看就知道是誰說的 */
+.row--in  .bubble{border-bottom-left-radius:5px}
+.row--out .bubble{border-bottom-right-radius:5px;background:var(--panel-2);border-color:transparent}
+/* 課堂紀錄是簿子的主體,不只是一句話:頂上一道金線把它跟閒聊分開 */
+.bubble.is-lesson{box-shadow:inset 0 2px 0 var(--gold-edge)}
+
+.chip{
+  display:inline-block;margin-bottom:7px;
+  color:var(--gold);border:1px solid var(--line);
+  border-radius:var(--radius-pill);padding:2px 9px;font-size:var(--fs-2xs);
+}
 .entry-body{
-  font-size:var(--fs-md);color:var(--ivory);line-height:1.85;
+  font-size:var(--fs-md);color:var(--ivory);line-height:1.8;
   white-space:pre-wrap;overflow-wrap:anywhere;
 }
-.entry--reply .entry-body{color:var(--muted-bright)}
+
+/* 時間、已修改、⋯ 放在泡泡外面,跟通訊軟體一樣,不佔泡泡裡的空間 */
+.meta{
+  display:flex;align-items:center;gap:6px;margin:4px 4px 0;
+  font-size:var(--fs-2xs);color:var(--muted);
+}
+.row--out .meta{flex-direction:row-reverse}
+.meta .when{font-variant-numeric:tabular-nums}
+.meta .edited{font-style:italic;opacity:.85}
 
 .empty{
   text-align:center;padding:30px 16px;color:var(--muted);
@@ -718,11 +753,16 @@ footer{
     <div class="empty" id="nbEmpty" hidden></div>
 
     <section class="sheet sheet--plain" id="composer">
+      <button class="composer-bar" type="button" id="composerBar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/></svg>
+        <span class="ph" id="composerPh">寫點什麼…</span>
+      </button>
       <div class="sheet-head">
         <span class="mark">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13h5"/></svg>
         </span>
         <h3 id="composerTitle">寫下這堂課</h3>
+        <button class="composer-close" type="button" id="composerClose" data-i18n="composerCollapse">收起</button>
       </div>
       <div class="sheet-body">
         <div class="field-row" id="kindRow" hidden>
@@ -889,6 +929,7 @@ const I18N = {
     archiveConfirm: "封存這本簿子？它會從名冊上收起來，紀錄都留著，隨時可以取回。",
     archivedTag: "已封存", showArchived: "顯示已封存的（{n}）", hideArchived: "收起已封存的",
     errDel: "刪不掉。重新整理這一頁再試一次。",
+    composerHint: "寫點什麼…", composerCollapse: "收起",
     recStart: "錄一段", recVideo: "錄一段影片", recStop: "停下來",
     addPhoto: "加一張照片", attachRemove: "移除",
     videoReady: "影片 {d}", playVideo: "看這段影片 · {d}", uploading: "正在送出… {p}%",
@@ -982,6 +1023,7 @@ const I18N = {
     archiveConfirm: "Archive this notebook? It leaves the register but every entry is kept, and you can bring it back any time.",
     archivedTag: "Archived", showArchived: "Show archived ({n})", hideArchived: "Hide archived",
     errDel: "Couldn't delete it. Reload the page and try again.",
+    composerHint: "Write something…", composerCollapse: "Close",
     recStart: "Record", recVideo: "Record video", recStop: "Stop",
     addPhoto: "Add a photo", attachRemove: "Remove",
     videoReady: "Video {d}", playVideo: "Play this video · {d}", uploading: "Sending… {p}%",
@@ -1120,6 +1162,10 @@ let teacherKind = "lesson";
 let editingId = null;     // 正在改寫的那一筆
 let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
 let openActsId = null;    // 哪一筆的 ⋯ 是打開的
+let stickBottom = false;  // 下一次重畫要不要捲到最新的一筆
+function nearBottom(){
+  return (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 160);
+}
 let addingKid = false;    // 家長正在加第二個孩子
 let showArchived = false; // 名冊上要不要把封存的也列出來
 
@@ -1370,6 +1416,7 @@ function renderComposer(){
   document.querySelectorAll("#kindSeg button").forEach(b => {
     b.setAttribute("aria-pressed", String(b.dataset.kind === teacherKind));
   });
+  $("composerPh").textContent = t("composerHint");
   const btn = $("sendBtn");
   if (!btn.dataset.busy) btn.textContent = amTeacher ? t("sendTeacher") : t("sendParent");
 }
@@ -1402,54 +1449,77 @@ function renderTimeline(){
       box.appendChild(sep);
     }
 
-    const art = document.createElement("article");
-    art.className = "entry entry--" + (en.kind === "lesson" ? "lesson" : "reply");
-
-    const head = document.createElement("div");
-    head.className = "entry-head";
-
+    /* 自己寫的靠右、對方寫的靠左。「自己」是看的人自己 —— 同一筆課堂紀錄,
+       老師看在右邊、家長看在左邊 */
+    const out = !!(me && en.authorUid === me.uid);
     const teacherSide = en.authorRole === "teacher";
     const name = teacherSide
       ? (en.authorName || t("roleTeacher"))
       : t("parentOf", { name: (current && current.name) || t("roleParent") });
 
-    /* 頭像:老師用自己的大頭貼(只有一位,認得出來),家長一律用孩子名字的第一個字 —— 
-       家長的 Google 大頭貼跟孩子對不起來,反而更難認 */
-    const ava = document.createElement("span");
-    ava.className = "ava";
-    if (teacherSide && me && amTeacher && me.photoURL && en.authorUid === me.uid) {
-      const im = document.createElement("img");
-      im.src = me.photoURL; im.alt = ""; im.referrerPolicy = "no-referrer";
-      ava.appendChild(im);
-    } else {
-      ava.textContent = (name || "?").trim().charAt(0);
+    const row = document.createElement("div");
+    row.className = "row " + (out ? "row--out" : "row--in");
+
+    // 頭像只在對方那一側,自己是誰不必告訴自己
+    if (!out) {
+      const ava = document.createElement("span");
+      ava.className = "ava" + (teacherSide ? " ava--teacher" : "");
+      if (teacherSide && !amTeacher && en.authorPhoto) {
+        const im = document.createElement("img");
+        im.src = en.authorPhoto; im.alt = ""; im.referrerPolicy = "no-referrer";
+        ava.appendChild(im);
+      } else {
+        ava.textContent = (name || "?").trim().charAt(0);
+      }
+      row.appendChild(ava);
     }
 
-    const who = document.createElement("span");
-    who.className = "who";
-    who.textContent = name;
+    const col = document.createElement("div");
+    col.className = "col";
 
-    const kind = document.createElement("span");
-    kind.className = "kind";
-    kind.textContent = en.kind === "lesson"
-      ? (en.date ? t("lessonOn", { d: fmtISO(en.date) }) : t("kindLesson"))
-      : (teacherSide ? t("kindTeacherReply") : t("kindReply"));
+    if (!out) {
+      const nm = document.createElement("span");
+      nm.className = "name";
+      nm.textContent = name;
+      col.appendChild(nm);
+    }
 
-    head.append(ava, who, kind);
+    const bubble = document.createElement("div");
+    bubble.className = "bubble" + (en.kind === "lesson" ? " is-lesson" : "");
 
+    if (editingId === en.id) {
+      bubble.appendChild(editBox(en));
+    } else {
+      if (en.kind === "lesson") {
+        const chip = document.createElement("span");
+        chip.className = "chip";
+        chip.textContent = en.date ? t("lessonOn", { d: fmtISO(en.date) }) : t("kindLesson");
+        bubble.appendChild(chip);
+      }
+      const body = document.createElement("div");
+      body.className = "entry-body";
+      body.textContent = en.body || "";
+      bubble.appendChild(body);
+      const tk = tasksNode(en);
+      if (tk) bubble.appendChild(tk);
+      const att = attachNode(en, current.id);
+      if (att) bubble.appendChild(att);
+    }
+    col.appendChild(bubble);
+
+    // 時間、已修改、⋯ 掛在泡泡外面
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const tm = document.createElement("span");
+    tm.className = "when";
+    tm.textContent = fmtWhen(en.createdAt);
+    meta.appendChild(tm);
     if (en.editedAt) {
       const ed = document.createElement("span");
       ed.className = "edited";
       ed.textContent = t("edited");
-      head.appendChild(ed);
+      meta.appendChild(ed);
     }
-
-    const tm = document.createElement("span");
-    tm.className = "when";
-    tm.textContent = fmtWhen(en.createdAt);
-    head.appendChild(tm);
-
-    /* 改與刪收在一顆 ⋯ 後面。只有動得了的人才看得到那顆鈕 */
     const mine = canEdit(en), able = canDelete(en);
     if (mine || able) {
       const more = document.createElement("button");
@@ -1463,55 +1533,53 @@ function renderTimeline(){
         confirmDelId = null;
         renderTimeline();
       };
-      head.appendChild(more);
+      meta.appendChild(more);
     }
+    col.appendChild(meta);
 
-    art.appendChild(head);
-
-    if (editingId === en.id) {
-      art.appendChild(editBox(en));
-    } else {
-      const body = document.createElement("div");
-      body.className = "entry-body";
-      body.textContent = en.body || "";
-      art.appendChild(body);
-      const tk = tasksNode(en);
-      if (tk) art.appendChild(tk);
-      const att = attachNode(en, current.id);
-      if (att) art.appendChild(att);
-
-      if (openActsId === en.id && (mine || able)) {
-        const acts = document.createElement("div");
-        acts.className = "entry-acts";
-        if (confirmDelId === en.id) {
-          const q = document.createElement("span");
-          q.className = "q"; q.textContent = t("delConfirm");
-          const yes = document.createElement("button");
-          yes.type = "button"; yes.className = "danger"; yes.textContent = t("delYes");
-          yes.onclick = () => { openActsId = null; removeEntry(en); };
-          const no = document.createElement("button");
-          no.type = "button"; no.textContent = t("cancel");
-          no.onclick = () => { confirmDelId = null; renderTimeline(); };
-          acts.append(q, yes, no);
-        } else {
-          if (mine) {
-            const ed = document.createElement("button");
-            ed.type = "button"; ed.textContent = t("editEntry");
-            ed.onclick = () => { editingId = en.id; openActsId = null; confirmDelId = null; renderTimeline(); };
-            acts.appendChild(ed);
-          }
-          if (able) {
-            const del = document.createElement("button");
-            del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
-            del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
-            acts.appendChild(del);
-          }
+    if (openActsId === en.id && (mine || able) && editingId !== en.id) {
+      const acts = document.createElement("div");
+      acts.className = "entry-acts";
+      if (confirmDelId === en.id) {
+        const q = document.createElement("span");
+        q.className = "q"; q.textContent = t("delConfirm");
+        const yes = document.createElement("button");
+        yes.type = "button"; yes.className = "danger"; yes.textContent = t("delYes");
+        yes.onclick = () => { openActsId = null; removeEntry(en); };
+        const no = document.createElement("button");
+        no.type = "button"; no.textContent = t("cancel");
+        no.onclick = () => { confirmDelId = null; renderTimeline(); };
+        acts.append(q, yes, no);
+      } else {
+        if (mine) {
+          const ed = document.createElement("button");
+          ed.type = "button"; ed.textContent = t("editEntry");
+          ed.onclick = () => { editingId = en.id; openActsId = null; confirmDelId = null; renderTimeline(); };
+          acts.appendChild(ed);
         }
-        art.appendChild(acts);
+        if (able) {
+          const del = document.createElement("button");
+          del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
+          del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
+          acts.appendChild(del);
+        }
       }
+      col.appendChild(acts);
     }
-    box.appendChild(art);
+
+    row.appendChild(col);
+    box.appendChild(row);
   });
+
+  /* 打開簿本、或自己剛寫完,要停在最新的一筆 —— 通訊軟體都是這樣,
+     不會讓你從三個月前開始捲。但使用者正在往上翻舊紀錄時不能硬把他拉回來,
+     所以只有「本來就在底部附近」時才跟著捲 */
+  if (stickBottom) {
+    stickBottom = false;
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight }));
+  } else if (nearBottom()) {
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight }));
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1571,6 +1639,7 @@ function openNotebook(id){
   current = st;
   entries = [];
   editingId = null; confirmDelId = null; openActsId = null;
+  stickBottom = true;      // 翻開簿本停在最新的一筆
   renderNotebookHead();
   renderComposer();
   renderTimeline();
@@ -1620,6 +1689,9 @@ async function addEntry(text){
     authorUid: me.uid,
     authorName: me.displayName || me.email || "",
     authorRole: amTeacher ? "teacher" : "parent",
+    /* 老師的大頭貼存下來,家長那邊才顯示得出來(家長讀不到老師的帳號)。
+       家長的大頭貼不存 —— 那張臉跟孩子對不起來,反而更難認 */
+    authorPhoto: amTeacher ? (me.photoURL || "") : "",
     createdAt: serverTimestamp(),
   };
   if (kind === "lesson") {
@@ -2058,6 +2130,20 @@ function attachNode(en, studentId){
 /* ══════════════════════════════════════════════════════════════
    8. 互動
    ══════════════════════════════════════════════════════════════ */
+/* 輸入框的展開與收合。展開之後把它捲進畫面,不然在手機上長出來的那一截
+   會被鍵盤或畫面底部吃掉 */
+function openComposer(focus){
+  $("composer").classList.add("is-open");
+  if (focus !== false) setTimeout(() => { $("bodyInput").focus(); }, 30);
+  setTimeout(() => { $("composer").scrollIntoView({ block: "end", behavior: "smooth" }); }, 60);
+}
+function closeComposer(){
+  $("composer").classList.remove("is-open");
+  stopRec();
+}
+$("composerBar").onclick = () => openComposer(true);
+$("composerClose").onclick = () => closeComposer();
+
 $("recBtn").onclick = () => startRec("audio");
 $("vidBtn").onclick = () => startRec("video");
 $("recStopBtn").onclick = () => stopRec();
@@ -2175,6 +2261,8 @@ $("sendBtn").onclick = async () => {
     ta.value = "";
     $("taskInput").value = "";
     clearPending();
+    closeComposer();
+    stickBottom = true;      // 自己剛寫完,一定要看得到它
     // 時間軸交給 onSnapshot 更新,這裡不要自己塞一筆進去,不然會看到兩筆
   } catch (e) {
     console.warn("addEntry:", e && e.code, e && e.message);
