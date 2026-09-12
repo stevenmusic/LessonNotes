@@ -5,65 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <!-- 手機瀏覽器的網址列會吃這個顏色。切換主題時 applyTheme() 會一起改,
      不然頁面是紙張色、上面那條還是黑的,看起來像沒對齊 -->
-<meta name="theme-color" content="#F4ECDA">
+<meta name="theme-color" content="#FFFFFF">
 <title id="pageTitle">LessonNotes — 琴課小簿</title>
 <meta name="description" content="LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230C0A07'/%3E%3Cpath d='M8 7h16v18H8z' fill='none' stroke='%23EFD48A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12 7v18' stroke='%23EFD48A' stroke-width='2'/%3E%3Cpath d='M16 13h5M16 18h5' stroke='%23EFD48A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- 系統字優先,桌機沒有中文字型時才退回 Noto Sans TC -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ══ 設計代幣:與 ScrollScore / SightScore / HarmonyMap / LoudMaster / VinylVault
    同一套語意變數,六個工具放在一起看是同一個產品。深色是整個工具箱的共同底色 ══ */
+/* ══ 色票 ══
+   參考 Messenger / WhatsApp / LINE / Instagram 的共通做法:
+   中性的底(不是有顏色的紙)、白色的面、一個飽和的重點色,少量的框線。
+   變數名稱沿用舊的語意名(--gold 等於「重點色」、--ivory 等於「主要文字」),
+   所以版面與元件的程式碼一行都不用改 —— 只有值換掉。
+
+   亮色是預設。通訊軟體都是亮色優先,而這一頁大多時候是在白天、在教室裡看的。 */
 :root{
-  --bg:#0C0A07;
-  --panel:#161209;
-  --panel-2:#201A0F;
-  --gold:#C9A24B;
-  --gold-bright:#EFD48A;
-  --gold-edge:#C9A24B;     /* 只畫線、不承載文字的金。深色底下跟 --gold 同值 */
-  --ivory:#F4ECDA;
-  --muted:#8A7D5F;
-  --muted-bright:#B6A576;
-  --line:#2A2415;
-  --rule-line:rgba(201,162,75,.10);   /* 簿本內頁的橫線 */
-  --danger:#C1573F;
-  --shadow-sm:0 4px 14px rgba(0,0,0,.35);
-  --shadow-md:0 10px 26px rgba(0,0,0,.5);
-  --radius-sm:8px;
-  --radius-md:14px;
+  --bg:#F0F2F5;          /* 對話的底,中性淺灰 */
+  --panel:#FFFFFF;       /* 卡片、對方的泡泡、頂欄 */
+  --panel-2:#E9EDF1;     /* 輸入框、次要填色 */
+  --gold:#0A7C6B;        /* 重點色:按鈕、連結、圖示 */
+  --gold-bright:#09665A;
+  --gold-edge:#0A7C6B;
+  --out-bg:#0A7C6B;      /* 自己的泡泡 */
+  --out-ink:#FFFFFF;
+  --lesson:#C77700;      /* 課堂紀錄的記號,跟一般訊息分開 */
+  --ivory:#111B21;       /* 主要文字 */
+  --muted:#667781;
+  --muted-bright:#3B4A54;
+  --line:#E3E7EA;
+  --rule-line:transparent;   /* 內頁橫線收掉了,紙張的比喻改用留白處理 */
+  --danger:#C0392B;
+  --shadow-sm:0 1px 2px rgba(11,20,26,.08);
+  --shadow-md:0 6px 20px rgba(11,20,26,.12);
+  --radius-sm:10px;
+  --radius-md:16px;
   --radius-lg:18px;
   --radius-pill:999px;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang TC",
+         "Hiragino Sans TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
   --fs-2xs:11px;
   --fs-xs:12px;
   --fs-sm:13px;
-  --fs-md:14px;
+  --fs-md:15px;
   --fs-lg:16px;
   --fs-xl:19px;
-  --fs-2xl:26px;
-  color-scheme:dark;
-}
-/* ══ 紙張主題:同一組語意變數換一套值,版面與元件一行都不用改寫 ══
-   這一頁是聯絡簿,紙張色是它的預設(見 themeIsLight()),而不是另外長一個樣子的工具。
-   底 / 字 / 卡片用指定的 #F4ECDA / #3A2F22 / #EFE0C4;金色拆成兩個角色:
-   #C9A24B 在 #F4ECDA 上只有約 1.9:1,當文字讀不動,所以文字與圖示用壓深的
-   #856418(約 4.5:1),原本的 #C9A24B 留給框線與橫線這種不用讀的地方。 */
-body.light{
-  --bg:#F4ECDA;
-  --panel:#EFE0C4;
-  --panel-2:#E8D6B2;
-  --gold:#856418;
-  --gold-bright:#6B5115;
-  --gold-edge:#C9A24B;
-  --ivory:#3A2F22;
-  --muted:#6F6450;
-  --muted-bright:#544B3B;
-  --line:#DCCBA4;
-  --rule-line:rgba(138,110,51,.16);
-  --danger:#9C3F2A;
-  --shadow-sm:0 4px 14px rgba(90,72,30,.10);
-  --shadow-md:0 10px 26px rgba(90,72,30,.16);
+  --fs-2xl:24px;
   color-scheme:light;
+}
+/* 夜間:照 WhatsApp 深色模式那種帶點藍的深灰,不是純黑 */
+body.dark{
+  --bg:#0B141A;
+  --panel:#1F2C33;
+  --panel-2:#182229;
+  --gold:#21C7B4;
+  --gold-bright:#59E0D1;
+  --gold-edge:#21C7B4;
+  --out-bg:#0B5F55;
+  --out-ink:#E9EDEF;
+  --lesson:#E8A33D;
+  --ivory:#E9EDEF;
+  --muted:#8696A0;
+  --muted-bright:#AEBAC1;
+  --line:#2A3942;
+  --rule-line:transparent;
+  --danger:#F0806C;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
+  --shadow-md:0 8px 24px rgba(0,0,0,.45);
+  color-scheme:dark;
 }
 /* touch-action:manipulation 只關掉「雙擊放大」這個手勢,雙指縮放完全不受影響——
    跟直接鎖 viewport 的 user-scalable=no 不一樣,那個連縮放需求的使用者也會一起擋掉 */
@@ -76,8 +88,9 @@ html{height:100%;-webkit-text-size-adjust:100%}
 body{
   min-height:100%;
   background:var(--bg);color:var(--ivory);
-  font-family:"Noto Sans TC",sans-serif;
+  font-family:var(--sans);
   display:flex;flex-direction:column;
+  -webkit-font-smoothing:antialiased;
   transition:background .2s,color .2s;
 }
 
@@ -88,6 +101,7 @@ header{
   padding:10px 14px;border-bottom:1px solid var(--line);
   background:var(--panel);
   position:sticky;top:0;z-index:20;
+  padding-top:calc(10px + env(safe-area-inset-top));
 }
 .header-left,.header-right{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
 /* 回首頁的路徑跟 ScrollScore / SightScore / HarmonyMap / LoudMaster 用同一套安靜文字連結 */
@@ -99,35 +113,35 @@ header{
 .home-link:hover,.home-link:focus-visible{color:var(--gold-bright)}
 /* 品牌名的字級、字距與各斷點與 ScrollScore 完全相同,六個工具的品牌名要長得一模一樣 */
 header h1{
-  font-family:"Noto Serif TC",serif;
-  font-size:clamp(12px, 3.7vw, var(--fs-lg));
-  letter-spacing:clamp(.02em, .55vw, .12em);
-  font-weight:700;color:var(--gold);white-space:nowrap;
-  flex:none;
+  font-size:var(--fs-lg);letter-spacing:-.01em;
+  font-weight:700;color:var(--ivory);white-space:nowrap;flex:none;
 }
-header h1 span{color:var(--ivory);font-weight:600}
+header h1 span{color:var(--gold)}
 /* 副標獨立成一個元素,不寫進 h1 裡面,免得動到照抄過來的品牌名字級 */
 .tagline{color:var(--muted);font-size:var(--fs-xs);letter-spacing:.04em;white-space:nowrap}
 @media (max-width:600px){ .tagline{display:none} }
 
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;line-height:1;
-  border:1px solid var(--gold);background:transparent;color:var(--gold);
+  border:1px solid var(--line);background:var(--panel);color:var(--ivory);
   font-family:inherit;font-size:var(--fs-md);font-weight:500;
   padding:8px 16px;height:38px;border-radius:var(--radius-pill);cursor:pointer;
-  transition:background .2s,color .2s,border-color .2s;white-space:nowrap;
-  text-decoration:none;
+  transition:background .15s,color .15s,border-color .15s,opacity .15s;
+  white-space:nowrap;text-decoration:none;
 }
+.btn:hover{background:var(--panel-2)}
 .btn svg{flex:none}
-.btn:active{background:var(--gold);color:var(--bg)}
-.btn:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
-.btn.primary{background:var(--gold);color:var(--bg);font-weight:700}
-.btn.ghost{border-color:var(--line);color:var(--muted-bright)}
+.btn:active{transform:scale(.98)}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
+.btn.primary:hover{background:var(--gold-bright);border-color:var(--gold-bright)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--muted-bright)}
+.btn.ghost:hover{background:var(--panel-2)}
 .btn.small{height:32px;padding:0 12px;font-size:var(--fs-sm)}
 .btn[disabled]{opacity:.5;cursor:default}
 /* 語言鈕與主題鈕統一用正圓形(跟其他五個工具同一套外觀),語言鈕只放文字不放圖示 */
 #langToggle{aspect-ratio:1;padding:0}
-#langToggle[aria-pressed="true"],#themeToggle[aria-pressed="true"]{background:var(--gold);color:var(--bg)}
+#langToggle[aria-pressed="true"],#themeToggle[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#fff}
 /* 頂欄的內距與間距跟著寬度連續縮放,不用斷點硬切(照 ScrollScore 的值) */
 @media (max-width:600px){
   header{padding:8px clamp(6px, 2.2vw, 10px);gap:clamp(4px, 1.4vw, 6px);flex-wrap:nowrap}
@@ -147,16 +161,15 @@ main{
   font-size:var(--fs-xs);letter-spacing:.22em;text-transform:uppercase;
   color:var(--gold);margin-bottom:12px;font-weight:500;
 }
-/* 字級照 LoudMaster 的頁面標題(clamp(24px, 7vw, 32px))。字型與字重五個工具本來
-   就同一份(Noto Serif TC 600/700),但這裡原本開到 40px —— 比其他工具最大的
-   serif 還大一截,放在一起看就像換了一套字。字級也是字型的一部分 */
+/* 標題字級。
+   字級也是字型的一部分:標題靠字重與字級拉層次,不要為了「更醒目」一路放大 */
 h2.title{
-  font-family:"Noto Serif TC",serif;font-weight:700;
+  font-family:var(--sans);font-weight:700;
   font-size:clamp(24px, 7vw, 32px);line-height:1.22;
   color:var(--ivory);letter-spacing:.02em;
 }
 .sub{color:var(--muted-bright);font-size:var(--fs-lg);line-height:1.85;margin-top:14px}
-.rule{height:1px;background:linear-gradient(90deg,var(--gold-edge),transparent);opacity:.7;margin:clamp(24px, 5vw, 34px) 0}
+.rule{height:1px;background:var(--line);margin:clamp(18px, 4vw, 26px) 0}
 
 /* ── 簿本內頁 ──
    橫線是畫在底色上的 repeating gradient,不是一堆 <div>。行高 30px 與 .field 的
@@ -164,14 +177,13 @@ h2.title{
 .sheet{
   background:var(--panel);
   border:1px solid var(--line);
-  border-radius:var(--radius-lg);
+  border-radius:var(--radius-md);
   box-shadow:var(--shadow-sm);
   overflow:hidden;
 }
 .sheet-head{
   display:flex;align-items:center;gap:10px;
-  padding:16px 20px;border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg, rgba(201,162,75,.07), transparent);
+  padding:14px 20px;border-bottom:1px solid var(--line);
 }
 .sheet-head .mark{
   width:32px;height:32px;flex:none;border-radius:9px;
@@ -180,19 +192,12 @@ h2.title{
 }
 .sheet-head .mark svg{width:17px;height:17px}
 .sheet-head h3{
-  font-family:"Noto Serif TC",serif;font-weight:600;
+  font-family:var(--sans);font-weight:600;
   font-size:var(--fs-xl);color:var(--gold);line-height:1.3;
 }
-.sheet-body{
-  padding:22px 20px 24px;
-  background-image:repeating-linear-gradient(
-    to bottom, transparent 0 29px, var(--rule-line) 29px 30px);
-}
-/* 內頁橫線只留給「整張都是文字」的那幾張(署名、還沒設定好)。
-   輸入框與按鈕壓在橫線上會互相打架,看起來像沒對齊 */
-.sheet--plain .sheet-body{background-image:none}
-.sheet-body > p{font-size:var(--fs-md);color:var(--muted-bright);line-height:30px}
-.sheet-body > p + p{margin-top:30px}
+.sheet-body{padding:20px}
+.sheet-body > p{font-size:var(--fs-md);color:var(--muted-bright);line-height:1.75}
+.sheet-body > p + p{margin-top:14px}
 .fineprint{font-size:var(--fs-sm);color:var(--muted);line-height:1.85;margin-top:16px}
 
 /* ── Google 登入鈕 ──
@@ -232,7 +237,7 @@ h2.title{
 .person .who{min-width:0}
 .person{padding-bottom:22px;border-bottom:1px solid var(--line)}
 .person .who strong{
-  display:block;font-family:"Noto Serif TC",serif;font-weight:600;
+  display:block;font-family:var(--sans);font-weight:600;
   font-size:var(--fs-2xl);line-height:1.3;color:var(--ivory);overflow-wrap:anywhere;
 }
 .person .who span{display:block;font-size:var(--fs-sm);color:var(--muted);letter-spacing:.06em;margin-bottom:2px}
@@ -255,7 +260,7 @@ h2.title{
 
 /* ── 還在裝訂中的幾頁 ───────────────────────── */
 .binding h4{
-  font-family:"Noto Serif TC",serif;font-weight:600;
+  font-family:var(--sans);font-weight:600;
   font-size:var(--fs-lg);color:var(--ivory);margin-bottom:4px;
 }
 .binding > p{font-size:var(--fs-sm);color:var(--muted);line-height:1.8;margin-bottom:18px}
@@ -301,20 +306,27 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
    展開的完整表單(上課日期、作業、附件)很高,所以預設收成一條,點了才長出來 */
 #composer{
   position:sticky;bottom:0;z-index:12;margin-top:10px;
-  background:var(--panel);
-  box-shadow:0 -12px 24px -14px rgba(0,0,0,.45);
+  background:var(--bg);border:0;border-radius:0;
+  padding-bottom:env(safe-area-inset-bottom);
 }
-body.light #composer{box-shadow:0 -12px 24px -14px rgba(90,72,30,.28)}
+body.dark #composer{box-shadow:0 -12px 24px -14px rgba(0,0,0,.6)}
 .composer-bar{
   display:flex;align-items:center;gap:10px;width:100%;
-  background:none;border:0;padding:14px 16px;cursor:text;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-pill);
+  padding:12px 18px;margin:8px 0;cursor:text;
   font-family:inherit;font-size:var(--fs-lg);color:var(--muted);text-align:left;
+  box-shadow:var(--shadow-sm);
 }
+.composer-bar:hover{background:var(--panel-2)}
 .composer-bar svg{width:19px;height:19px;flex:none;color:var(--gold)}
 .composer-bar .ph{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #composer.is-open .composer-bar{display:none}
 #composer:not(.is-open) .sheet-head,
 #composer:not(.is-open) .sheet-body{display:none}
+#composer.is-open{
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-md);margin-bottom:8px;
+}
 .composer-close{
   margin-left:auto;background:none;border:0;cursor:pointer;
   color:var(--muted);font-family:inherit;font-size:var(--fs-sm);padding:6px 8px;border-radius:6px;
@@ -355,18 +367,18 @@ body.light #composer{box-shadow:0 -12px 24px -14px rgba(90,72,30,.28)}
 .tasks label{
   display:flex;align-items:flex-start;gap:10px;cursor:pointer;
   padding:7px 8px;border-radius:var(--radius-sm);line-height:1.7;
-  font-size:var(--fs-md);color:var(--ivory);
+  font-size:var(--fs-md);color:inherit;
 }
-.tasks label:hover{background:var(--panel-2)}
+.tasks label:hover{background:rgba(127,127,127,.1)}
 .tasks input[type="checkbox"]{
   width:20px;height:20px;flex:none;margin-top:.15em;accent-color:var(--gold);cursor:pointer;
 }
-.tasks .done{color:var(--muted);text-decoration:line-through}
+.tasks .done{opacity:.55;text-decoration:line-through}
 .tasks-head{
-  display:flex;align-items:baseline;gap:8px;margin-top:14px;
-  font-size:var(--fs-xs);color:var(--gold);letter-spacing:.08em;
+  display:flex;align-items:baseline;gap:8px;margin-top:12px;
+  font-size:var(--fs-xs);color:inherit;opacity:.75;font-weight:600;
 }
-.tasks-head .count{color:var(--muted);letter-spacing:0}
+.tasks-head .count{opacity:.8;font-weight:400}
 @media (pointer:coarse){ .tasks label{padding:10px 8px} }
 
 /* 名冊上的作業進度 */
@@ -433,34 +445,61 @@ body.light #composer{box-shadow:0 -12px 24px -14px rgba(90,72,30,.28)}
 }
 
 /* ── 名冊 ───────────────────────── */
-.roster{display:grid;gap:10px}
-.roster-item{
-  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
-  padding:15px 17px;cursor:pointer;font-family:inherit;
-  transition:border-color .2s,transform .12s;
+/* 對話清單:頭像 + 名字 + 最後一句 + 時間,跟所有通訊軟體一樣。
+   整份清單是一張白色的面,列與列之間只有一條細線 —— 不是一堆各自獨立的卡片 */
+.roster{
+  background:var(--panel);border-radius:var(--radius-md);
+  overflow:hidden;box-shadow:var(--shadow-sm);
 }
-.roster-item:hover,.roster-item:focus-visible{border-color:var(--gold);outline:none}
-.roster-item:active{transform:scale(.995)}
+.roster-item{
+  display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  background:none;border:0;border-bottom:1px solid var(--line);
+  padding:12px 15px;cursor:pointer;font-family:inherit;
+  transition:background .15s;
+}
+.roster-item:last-child{border-bottom:0}
+.roster-item:hover{background:var(--panel-2)}
+.roster-item:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.roster-item:active{background:var(--panel-2)}
+.roster-item .rava{
+  width:48px;height:48px;flex:none;border-radius:50%;
+  display:grid;place-items:center;
+  background:var(--panel-2);color:var(--muted-bright);
+  font-size:var(--fs-lg);font-weight:600;
+}
 .roster-item .nm{flex:1;min-width:0}
 .roster-item .nm strong{
-  display:block;font-family:"Noto Serif TC",serif;font-weight:600;
-  font-size:var(--fs-xl);color:var(--ivory);line-height:1.3;overflow-wrap:anywhere;
+  display:block;font-weight:600;font-size:var(--fs-lg);color:var(--ivory);
+  line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.roster-item .nm span{display:block;font-size:var(--fs-sm);color:var(--muted);margin-top:3px}
-.roster-item .arw{flex:none;color:var(--gold)}
-.roster-item .arw svg{width:16px;height:16px;display:block}
+.roster-item .nm span{
+  display:block;font-size:var(--fs-sm);color:var(--muted);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.roster-item .side{
+  flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px;
+  font-size:var(--fs-2xs);color:var(--muted);
+}
+/* 在等你回的那幾本:名字旁邊一顆點,右邊的時間也跟著變色 —— 跟未讀是同一套語言 */
+.roster-item .dotmark{
+  width:9px;height:9px;border-radius:50%;background:var(--gold);
+}
+.roster-item .nm span.waiting{color:var(--gold);font-weight:500}
+.roster-item .side.waiting{color:var(--gold)}
+.roster-item .nm span.tasks-left{color:var(--lesson)}
 
 /* ── 時間軸 ───────────────────────── */
 .timeline{display:grid;gap:10px;margin-bottom:26px}
 
 /* 日期分隔線。簿本一長,沒有這個就只剩一堆卡片,看不出哪些是同一天的事 */
 .day-sep{
-  display:flex;align-items:center;gap:12px;
-  margin:14px 2px 4px;
-  font-size:var(--fs-xs);color:var(--muted);letter-spacing:.1em;
+  display:flex;justify-content:center;margin:16px 0 10px;
 }
-.day-sep::before,.day-sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.day-sep span{
+  background:var(--panel);color:var(--muted);
+  font-size:var(--fs-xs);padding:5px 13px;border-radius:var(--radius-pill);
+  box-shadow:var(--shadow-sm);
+}
 .timeline .day-sep:first-child{margin-top:0}
 
 /* ── 對話泡泡 ──
@@ -488,20 +527,25 @@ body.light #composer{box-shadow:0 -12px 24px -14px rgba(90,72,30,.28)}
 }
 
 .bubble{
-  border-radius:var(--radius-md);padding:11px 14px;
-  background:var(--panel);border:1px solid var(--line);min-width:0;
+  border-radius:18px;padding:9px 13px;
+  background:var(--panel);border:0;min-width:0;
+  box-shadow:var(--shadow-sm);
 }
 /* 泡泡靠自己那一側的下角收起來,方向一看就知道是誰說的 */
-.row--in  .bubble{border-bottom-left-radius:5px}
-.row--out .bubble{border-bottom-right-radius:5px;background:var(--panel-2);border-color:transparent}
-/* 課堂紀錄是簿子的主體,不只是一句話:頂上一道金線把它跟閒聊分開 */
-.bubble.is-lesson{box-shadow:inset 0 2px 0 var(--gold-edge)}
+.row--in  .bubble{border-bottom-left-radius:6px}
+.row--out .bubble{border-bottom-right-radius:6px;background:var(--out-bg);color:var(--out-ink)}
+.row--out .entry-body{color:var(--out-ink)}
+/* 課堂紀錄是簿子的主體,不只是一句話:左緣一道記號把它跟閒聊分開 */
+.bubble.is-lesson{box-shadow:var(--shadow-sm), inset 3px 0 0 var(--lesson)}
+.row--out .bubble.is-lesson{box-shadow:var(--shadow-sm), inset -3px 0 0 rgba(255,255,255,.55)}
+body.dark .row--out .chip{color:rgba(233,237,239,.75)}
 
 .chip{
-  display:inline-block;margin-bottom:7px;
-  color:var(--gold);border:1px solid var(--line);
-  border-radius:var(--radius-pill);padding:2px 9px;font-size:var(--fs-2xs);
+  display:inline-block;margin-bottom:6px;
+  color:var(--lesson);font-size:var(--fs-2xs);font-weight:600;
+  letter-spacing:.02em;
 }
+.row--out .chip{color:rgba(255,255,255,.82)}
 .entry-body{
   font-size:var(--fs-md);color:var(--ivory);line-height:1.8;
   white-space:pre-wrap;overflow-wrap:anywhere;
@@ -523,20 +567,37 @@ body.light #composer{box-shadow:0 -12px 24px -14px rgba(90,72,30,.28)}
 }
 
 .backlink{
-  display:inline-flex;align-items:center;gap:5px;
-  background:none;border:0;padding:6px 4px;margin-bottom:14px;cursor:pointer;
-  color:var(--muted);font-family:inherit;font-size:var(--fs-sm);
+  display:inline-flex;align-items:center;gap:5px;flex:none;
+  background:none;border:0;padding:6px 2px;cursor:pointer;
+  color:var(--gold);font-family:inherit;font-size:var(--fs-lg);
 }
 .backlink:hover,.backlink:focus-visible{color:var(--gold-bright);outline:none}
 
 /* 簿本的抬頭:孩子的名字 + 上課時間,右邊一顆改名字 */
-.nb-head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:6px}
-.nb-head .t{flex:1;min-width:180px}
-.nb-head h2{
-  font-family:"Noto Serif TC",serif;font-weight:700;
-  font-size:clamp(24px, 7vw, 32px);line-height:1.22;color:var(--ivory);overflow-wrap:anywhere;
+/* 簿本的標題列:頭像 + 名字 + 上課時間,跟通訊軟體的對話視窗標題一樣。
+   釘在頂欄底下,捲動時一直知道自己在誰的簿子裡 */
+.nb-head{
+  display:flex;align-items:center;gap:12px;
+  position:sticky;top:var(--header-h,59px);z-index:11;
+  background:var(--bg);padding:10px 0;margin-bottom:4px;
 }
-.nb-head .slot{font-size:var(--fs-sm);color:var(--muted);margin-top:6px}
+/* 名冊那一頁沒有頭像與返回鍵,標題自己一行就好 */
+#viewRoster .nb-head{position:static;padding:6px 0 2px}
+#viewRoster .nb-head h2{font-size:var(--fs-2xl);font-weight:700}
+.nb-head .hava{
+  width:42px;height:42px;flex:none;border-radius:50%;
+  display:grid;place-items:center;background:var(--panel-2);
+  color:var(--muted-bright);font-size:var(--fs-lg);font-weight:600;
+}
+.nb-head .t{flex:1;min-width:0}
+.nb-head h2{
+  font-weight:600;font-size:var(--fs-xl);line-height:1.3;color:var(--ivory);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.nb-head .slot{
+  font-size:var(--fs-sm);color:var(--muted);margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 
 footer{
   padding:16px 14px calc(18px + env(safe-area-inset-bottom));
@@ -560,8 +621,8 @@ footer{
    使用者會先看到一下深色再跳成紙張色。下面 themeIsLight() 的規則跟這裡一模一樣,
    兩邊要一起改 */
 (function(){
-  try { document.body.classList.toggle("light", localStorage.getItem("sm_theme") !== "dark"); }
-  catch (e) { document.body.classList.add("light"); }
+  try { document.body.classList.toggle("dark", localStorage.getItem("sm_theme") === "dark"); }
+  catch (e) {}
 })();
 </script>
 
@@ -712,17 +773,18 @@ footer{
 
   <!-- ══ 某一本簿子:課堂紀錄 + 回覆 ══ -->
   <section id="viewNotebook" hidden>
-    <button class="backlink" id="backBtn" type="button" hidden>
-      <span aria-hidden="true">←</span><span data-i18n="backToRoster">回到名冊</span>
-    </button>
     <div class="nb-head">
+      <button class="backlink" id="backBtn" type="button" hidden
+              data-i18n-attr="aria-label:backToRoster" aria-label="回到名冊">
+        <span aria-hidden="true">←</span>
+      </button>
+      <span class="hava" id="nbAva" aria-hidden="true"></span>
       <div class="t">
         <h2 id="nbName">—</h2>
         <p class="slot" id="nbSlot" hidden></p>
       </div>
       <button class="btn small" id="editNameBtn" type="button" data-i18n="editName">改名字</button>
     </div>
-    <div class="rule"></div>
 
     <section class="sheet sheet--plain" id="renameBox" hidden>
       <div class="sheet-body">
@@ -1110,10 +1172,10 @@ function themeIsLight(){
 }
 function applyTheme(){
   const on = themeIsLight();
-  document.body.classList.toggle("light", on);
+  document.body.classList.toggle("dark", !on);
   $("themeToggle").setAttribute("aria-pressed", String(!on));
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", on ? "#F4ECDA" : "#0C0A07");
+  if (meta) meta.setAttribute("content", on ? "#FFFFFF" : "#0B141A");
 }
 $("themeToggle").onclick = () => {
   try { localStorage.setItem(THEME_KEY, themeIsLight() ? "dark" : "light"); } catch (e) {}
@@ -1355,31 +1417,51 @@ function renderRoster(){
     const b = document.createElement("button");
     b.type = "button";
     b.className = "roster-item";
+    const wait = isWaiting(st);
+
+    const av = document.createElement("span");
+    av.className = "rava";
+    av.textContent = (st.name || "?").trim().charAt(0);
+
     const nm = document.createElement("span");
     nm.className = "nm";
     const strong = document.createElement("strong");
     strong.textContent = st.name || t("nameEmpty");
+
+    /* 預覽那一行:優先顯示最後一句話(通訊軟體的做法)。沒有的話退回
+       上課時間 / 作業進度 / 「還沒有任何紀錄」 */
     const sub = document.createElement("span");
-    const bits = [];
-    if (st.slot) bits.push(st.slot);
-    const when = st.lastEntryAt && st.lastEntryAt.toDate ? fmtDate(st.lastEntryAt.toDate()) : null;
-    const wait = isWaiting(st);
-    bits.push(wait ? t("rosterWaiting", { d: when })
-      : (when ? t("rosterLast", { d: when }) : t("rosterNever")));
-    // 最新一次作業的進度,不用點進去就看得到誰還沒練完
     const lt = st.lastTasks;
-    if (lt && lt.n) bits.push(t("rosterTasks", { d: lt.d, n: lt.n }));
-    if (st.archived) bits.unshift(t("archivedTag"));
-    sub.textContent = bits.join(" · ");
-    if (wait) sub.className = "waiting";
-    else if (lt && lt.n && lt.d < lt.n) sub.className = "tasks-left";
+    if (st.archived) sub.textContent = t("archivedTag");
+    else if (st.lastText) {
+      sub.textContent = st.lastText;
+      if (wait) sub.className = "waiting";
+    } else if (lt && lt.n) {
+      sub.textContent = t("rosterTasks", { d: lt.d, n: lt.n });
+      sub.className = "tasks-left";
+    } else {
+      sub.textContent = st.slot || t("rosterNever");
+    }
     nm.append(strong, sub);
 
-    const arw = document.createElement("span");
-    arw.className = "arw";
-    arw.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+    const side = document.createElement("span");
+    side.className = "side" + (wait ? " waiting" : "");
+    const when = st.lastEntryAt && st.lastEntryAt.toDate ? st.lastEntryAt : null;
+    const tm = document.createElement("span");
+    tm.textContent = when ? fmtWhen(when) : "";
+    side.appendChild(tm);
+    if (wait) {
+      const d = document.createElement("span");
+      d.className = "dotmark";
+      side.appendChild(d);
+    } else if (lt && lt.n && lt.d < lt.n && st.lastText) {
+      const p = document.createElement("span");
+      p.className = "tasks-left";
+      p.textContent = t("rosterTasks", { d: lt.d, n: lt.n });
+      side.appendChild(p);
+    }
 
-    b.append(nm, arw);
+    b.append(av, nm, side);
     b.onclick = () => openNotebook(st.id);
     box.appendChild(b);
   });
@@ -1391,6 +1473,7 @@ function renderRoster(){
 function renderNotebookHead(){
   if (!current) return;
   $("nbName").textContent = current.name || t("nameEmpty");
+  $("nbAva").textContent = (current.name || "?").trim().charAt(0);
   const slot = $("nbSlot");
   const bits = [];
   if (current.archived) bits.push(t("archivedTag"));
@@ -1717,6 +1800,9 @@ async function addEntry(text){
     /* 出了作業就要立刻把進度寫上去。等到有人打第一個勾才寫的話,老師剛出完作業
        回到名冊會看到一片空白 —— 那正是他最想看到「0/3」的時候(踩過) */
     if (payload.tasks) patch.lastTasks = { d: 0, n: payload.tasks.length };
+    /* 清單上的預覽。通訊軟體的清單都會顯示最後一句,少了它只剩名字跟時間,
+       看不出那一本發生什麼事 */
+    patch.lastText = String(payload.body || "").slice(0, 60);
     await updateDoc(doc(db, "students", current.id), patch);
   } catch (e) { console.warn("lastEntryAt:", e && e.code); }
 }
@@ -2304,8 +2390,15 @@ $("backBtn").onclick = () => {
    ══════════════════════════════════════════════════════════════ */
 /* 先把主題與語言套好,再去載 Firebase。順序反過來的話,存了英文偏好的使用者
    會先看到一整頁中文,等 CDN 回來才換——而 CDN 慢的時候那是好幾秒 */
+function syncHeaderH(){
+  const h = document.querySelector("header");
+  if (h) document.documentElement.style.setProperty("--header-h", h.offsetHeight + "px");
+}
+addEventListener("resize", syncHeaderH, { passive: true });
+
 applyTheme();
 applyLanguage(LANG);
+syncHeaderH();
 show("out");
 
 if (CONFIGURED) startApp();   // 刻意不 await:模組慢,不該擋住整頁
