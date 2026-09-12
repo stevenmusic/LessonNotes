@@ -823,9 +823,10 @@ const I18N = {
     emptyParent: "老師還沒寫下第一堂課。有話想先跟老師說，直接寫在下面就可以。",
     kindLesson: "課堂紀錄", kindReply: "家長寫的", kindTeacherReply: "老師回覆",
     rosterWaiting: "家長寫了一句 · {d}",
-    roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長",
+    roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長", listSep: "、",
     signedAs: "目前署名", signOutText: "闔上簿本", teacherBadge: "老師",
     editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
+    edited: "已修改",
     taskLabel: "這週要練的（一行一項，可以不填）",
     taskPlaceholder: "小奏鳴曲 第一樂章 1–32 小節\n哈農 No.3　每天兩次\nC 大調音階 四個八度",
     tasksTitle: "這週要練的", tasksCount: "{d} / {n}", tasksAllDone: "全部練完了",
@@ -913,9 +914,10 @@ const I18N = {
     emptyParent: "The teacher hasn't written up a lesson yet. If there is something you want to say first, just write it below.",
     kindLesson: "Lesson note", kindReply: "From the family", kindTeacherReply: "Teacher's note",
     rosterWaiting: "The family wrote · {d}",
-    roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family",
+    roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family", listSep: ", ",
     signedAs: "Signed in as", signOutText: "Close the notebook", teacherBadge: "Teacher",
     editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
+    edited: "edited",
     taskLabel: "To practise this week (one per line, optional)",
     taskPlaceholder: "Sonatina, 1st mvt, bars 1\u201332\nHanon No.3, twice a day\nC major scale, four octaves",
     tasksTitle: "To practise this week", tasksCount: "{d} / {n}", tasksAllDone: "All done",
@@ -1062,6 +1064,20 @@ let editingId = null;     // 正在改寫的那一筆
 let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
 let addingKid = false;    // 家長正在加第二個孩子
 
+/* 刪除的時限。編輯不設限、刪除設限 —— 兩件事的風險不一樣:
+   改錯字是把紀錄變正確,刪掉是讓它消失,而對方可能已經照著做了。
+   老師不受限,他要管理整個工作室的紀錄(含刪掉測試用的簿子)。 */
+const DEL_WINDOW_MIN = 15;
+function entryAgeMin(en){
+  // serverTimestamp() 還沒回來的時候當成「剛剛」,剛送出的那一筆才刪得掉
+  const ts = en.createdAt && en.createdAt.toDate ? en.createdAt.toDate().getTime() : Date.now();
+  return (Date.now() - ts) / 60000;
+}
+function canDelete(en){
+  if (amTeacher) return true;
+  return !!(me && en.authorUid === me.uid && entryAgeMin(en) < DEL_WINDOW_MIN);
+}
+
 function isTeacherUser(u){
   const mail = (u && u.email || "").toLowerCase();
   return !!mail && TEACHER_EMAILS.map(x => x.toLowerCase()).includes(mail);
@@ -1106,10 +1122,25 @@ function setBusy(on){
   if (!on && sp) sp.remove();
 }
 
+/* 底下那行「目前署名」要跟時間軸上的署名同一套說法。家長看到自己的 Google
+   顯示名稱沒有意義 —— 這本簿子是誰的才有意義。老師照舊顯示自己的名字。
+
+   帳號認錯了還是看得出來:名字是從「這個帳號自己的簿子」推出來的,
+   登錯帳號會看到別的孩子(或是回到取名字那一頁),不會被這行字蓋過去。 */
+function whoLabel(){
+  if (!me) return "—";
+  const acct = me.displayName || me.email || "—";
+  if (amTeacher) return acct;
+  if (current && current.name) return t("parentOf", { name: current.name });
+  const names = students.map(x => x.name).filter(Boolean);
+  if (names.length) return t("parentOf", { name: names.join(t("listSep")) });
+  return acct;   // 還沒取名字的時候只剩帳號可以顯示
+}
+
 function renderWhoBar(){
   $("whoBar").hidden = !me;
   if (!me) return;
-  $("whoName").textContent = me.displayName || me.email || "—";
+  $("whoName").textContent = whoLabel();
   $("teacherBadge").hidden = !amTeacher;
   const img = $("whoPhoto");
   if (me.photoURL) { img.src = me.photoURL; img.hidden = false; }
@@ -1171,6 +1202,7 @@ function renderRoster(){
   // 家長只有在不只一個孩子時才會看到這一頁,標題與按鈕都要換成家長的說法
   document.querySelector('#viewRoster h2').textContent = amTeacher ? t("rosterTitle") : t("myKids");
   $("addKidRow").hidden = amTeacher;
+  renderWhoBar();
 
   list.forEach(st => {
     const b = document.createElement("button");
@@ -1276,6 +1308,12 @@ function renderTimeline(){
     /* 改與刪:自己寫的那一筆才改得動;老師連家長那筆也刪得掉,
        否則整本簿子(含測試用的)永遠刪不乾淨 */
     const mine = me && en.authorUid === me.uid;
+    /* 改過的要看得出來。對方可能已經照著舊的內容做了,悄悄改掉等於讓他對不上 */
+    if (en.editedAt) {
+      const ed = document.createElement("span");
+      ed.textContent = t("edited");
+      head.appendChild(ed);
+    }
     if (mine || amTeacher) {
       const acts = document.createElement("span");
       acts.className = "entry-acts";
@@ -1296,10 +1334,12 @@ function renderTimeline(){
           ed.onclick = () => { editingId = en.id; confirmDelId = null; renderTimeline(); };
           acts.appendChild(ed);
         }
-        const del = document.createElement("button");
-        del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
-        del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
-        acts.appendChild(del);
+        if (canDelete(en)) {
+          const del = document.createElement("button");
+          del.type = "button"; del.className = "danger"; del.textContent = t("delEntry");
+          del.onclick = () => { confirmDelId = en.id; editingId = null; renderTimeline(); };
+          acts.appendChild(del);
+        }
       }
       head.appendChild(acts);
     }
@@ -1381,6 +1421,7 @@ function openNotebook(id){
   renderNotebookHead();
   renderComposer();
   renderTimeline();
+  renderWhoBar();
   $("renameBox").hidden = true;
   show("notebook");
   watchEntries(id);
@@ -1559,7 +1600,7 @@ function editBox(en){
     const body = ta.value.trim();
     if (!body) { ta.focus(); return; }
     save.disabled = true;
-    const patch = { body: body };
+    const patch = { body: body, editedAt: fb.serverTimestamp() };
     if (dateIn) patch.date = dateIn.value || en.date || todayISO();
     /* 作業改了就整串換掉。已經打勾的項目如果文字沒變就保留勾勾,
        不然老師調一個錯字,家長整週的進度就歸零了 */
@@ -1960,6 +2001,7 @@ $("renameForm").addEventListener("submit", async ev => {
     await updateDoc(doc(db, "students", current.id), { name: name, slot: slot });
     current.name = name; current.slot = slot;
     renderNotebookHead();
+    renderWhoBar();
     $("renameBox").hidden = true;
   } catch (e) {
     console.warn("rename:", e && e.code, e && e.message);

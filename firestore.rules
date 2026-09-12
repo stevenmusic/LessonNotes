@@ -75,9 +75,14 @@ service cloud.firestore {
         allow update: if (isTeacher() || isMyStudent(studentId))
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tasks']);
 
-        /* 刪除:自己寫的,或老師。老師要刪得掉家長那幾筆,
-           不然整本簿子(含測試用的)永遠刪不乾淨 */
-        allow delete: if isTeacher() || (signedIn() && resource.data.authorUid == request.auth.uid);
+        /* 刪除:老師不受限(他要管理整個工作室的紀錄);其他人只能刪自己寫的,
+           而且限剛寫完的 15 分鐘內 —— 對方可能已經照著那一筆做了,
+           隔了幾天才讓它消失會讓人對不上。想作廢就用「改」,那會留下「已修改」。
+           時限在規則裡也擋一次,不然前端不給按只是裝飾 */
+        allow delete: if isTeacher()
+                      || (signedIn()
+                          && resource.data.authorUid == request.auth.uid
+                          && request.time < resource.data.createdAt + duration.value(15, 'm'));
       }
 
       /* 錄音與照片的位元組。刻意跟 entries 分開放:時間軸一次讀 50 筆,
