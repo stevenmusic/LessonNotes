@@ -246,6 +246,17 @@ h2.title{
    這顆用 Google 官方的四色 G(品牌規範要求),是整頁唯一不是線稿圖示的地方;
    其餘圖示一律沿用 ScrollScore 那套 24 格線稿。按鈕本體維持 .btn 的造型,
    不要換成 Google 自家的白底藍字樣式——那跟其他五個工具就不是同一套了 */
+.booting{
+  display:flex;align-items:center;gap:10px;
+  color:var(--muted);font-size:var(--fs-md);margin:18px 0 4px;
+}
+.booting::before{
+  content:"";width:16px;height:16px;flex:none;border-radius:50%;
+  border:2px solid var(--line);border-top-color:var(--gold);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .booting::before{animation:none;border-top-color:var(--line)} }
 .signin-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:26px}
 #signInBtn{height:46px;padding:0 22px;font-size:var(--fs-lg)}
 #signInBtn .g{width:18px;height:18px;flex:none}
@@ -854,7 +865,10 @@ footer{
     </div>
     <div class="sheet-body">
       <p data-i18n="outBody">用 Google 帳號署名一次，這本簿子就記得你是誰。老師寫下的課堂紀錄、家長回報的練習情況，之後都會收在這裡。</p>
-      <div class="signin-row">
+      <!-- 還在找上次的署名時顯示這一行。不先擋著的話,每次打開都會先看到
+           「用 Google 帳號署名」一兩秒,看起來就像被登出了 -->
+      <p class="booting" id="bootWait" data-i18n="bootWait">正在翻開上次的簿本…</p>
+      <div class="signin-row" id="signinRow">
         <button class="btn primary" id="signInBtn" type="button">
           <!-- Google 官方四色 G:品牌規範要求用原圖,不改色、不描邊 -->
           <svg class="g" viewBox="0 0 48 48" aria-hidden="true">
@@ -866,7 +880,7 @@ footer{
           <span data-i18n="signInText">用 Google 帳號署名</span>
         </button>
       </div>
-      <p class="fineprint" data-i18n="outFine">署名只用來認出你是哪一位，不會翻動你 Google 帳號裡的任何東西。</p>
+      <p class="fineprint" id="outFine" data-i18n="outFine">署名只用來認出你是哪一位，不會翻動你 Google 帳號裡的任何東西。</p>
       <div class="slip warn" id="errSlip" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5"/><path d="M12 17.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
         <span id="errText"></span>
@@ -1146,6 +1160,7 @@ const I18N = {
     lede: "一本兩邊都看得到的簿子。這堂課練到哪裡、下週要帶什麼、家裡練得順不順，寫在同一頁上，不必再靠訊息翻來翻去。",
     outTitle: "翻開屬於你的那一頁",
     outBody: "用 Google 帳號署名一次，這本簿子就記得你是誰。老師寫下的課堂紀錄、家長回報的練習情況，之後都會收在這裡。",
+    bootWait: "正在翻開上次的簿本…",
     signInText: "用 Google 帳號署名",
     signInBusy: "正在翻開…",
     outFine: "署名只用來認出你是哪一位，不會翻動你 Google 帳號裡的任何東西。",
@@ -1240,6 +1255,7 @@ const I18N = {
     lede: "One notebook both sides can read. What the lesson covered, what to bring next week, how practice went at home — all on the same page, instead of scattered through a chat thread.",
     outTitle: "Open your page",
     outBody: "Sign your name once with Google and the notebook will remember you. The teacher's lesson notes and the family's practice reports are kept here.",
+    bootWait: "Looking for your notebook…",
     signInText: "Sign with Google",
     signInBusy: "Opening…",
     outFine: "Your name is only used to tell who you are. Nothing in your Google account is touched.",
@@ -1422,6 +1438,15 @@ function isLesson(){ return amTeacher && composerMode === "lesson"; }
 let editingId = null;     // 正在改寫的那一筆
 let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
 let openActsId = null;    // 哪一筆的 ⋯ 是打開的
+/* 一打開頁面就先擋著署名頁:Firebase 要先從 CDN 載下來、再把上次的署名
+   從本機儲存裡撈回來,那一兩秒如果直接端出「用 Google 帳號署名」,
+   看起來就像被登出了 —— 而且這時候手癢按下去,真的會跳出選帳號的視窗(踩過) */
+let booting = true;
+function renderBoot(){
+  $("bootWait").hidden = !booting;
+  $("signinRow").hidden = booting;
+  $("outFine").hidden = booting;
+}
 let stickBottom = false;  // 下一次重畫要不要捲到最新的一筆
 /* 捲的是時間軸那一格,不是整頁 —— 簿本這一頁整頁是不捲的 */
 function nearBottom(){
@@ -1478,6 +1503,7 @@ function show(name){
   /* 只有簿本那一頁是「整頁不捲、時間軸自己捲」的聊天版面。
      名冊與署名頁還是一般的文件,照常捲、照常有頁尾 */
   document.body.classList.toggle("nb-mode", name === "notebook");
+  if (name === "out") renderBoot();
 }
 
 function showError(key){
@@ -2884,7 +2910,7 @@ syncHeaderH();
 show("out");
 
 if (CONFIGURED) startApp();   // 刻意不 await:模組慢,不該擋住整頁
-else show("setup");
+else { booting = false; renderBoot(); show("setup"); }
 
 async function startApp(){
   try {
@@ -2899,6 +2925,8 @@ async function startApp(){
     /* 連 CDN 都抓不到,署名這件事這次就做不了。把入口關掉並說清楚,
        不要留一顆按下去沒反應的按鈕 */
     unavailable = true;
+    booting = false;      // 找不到就是找不到,不要一直轉
+    renderBoot();
     setBusy(false);
     showError("errOffline");
     return;
@@ -2919,6 +2947,8 @@ async function startApp(){
 
   fb.onAuthStateChanged(auth, user => {
     me = user;
+    booting = false;      // 上次的署名找完了(有或沒有都算)
+    renderBoot();
     setBusy(false);
     if (stopStudents) { stopStudents(); stopStudents = null; }
     if (stopEntries) { stopEntries(); stopEntries = null; }
