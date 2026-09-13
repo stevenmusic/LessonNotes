@@ -13,9 +13,6 @@
   載不到只關掉署名入口
 - 不要在 `applyTheme()` / `applyLanguage()` 之前 await Firebase。
   順序反過來的話,存了英文偏好的使用者會先看到一整頁中文
-- 不要拿掉 `<body>` 開頭那段 classic script。這一頁預設紙張色,
-  等到模組腳本才套主題會先閃一下深色。它的判斷要跟 `themeIsLight()` 一模一樣,
-  兩邊要一起改
 - 不要拿掉 `[hidden]{display:none !important}`。`.slip` 是 `display:flex`,
   會蓋掉 `hidden` 屬性,少了這條會留下一張空的錯誤紙條(踩過)
 - 圖示一律用線稿 SVG(24 格線、`stroke-width:2`、圓端點、`stroke:currentColor`)。
@@ -32,32 +29,31 @@ max-width:600 / 380 / 340     pointer:coarse     prefers-reduced-motion:reduce
 一律用 clamp 算,不要為它新增斷點。
 
 ## 字型與字級
-**這一頁已經不跟其他四個工具共用外觀了**(明確要求過:配色與版面照
-Messenger / WhatsApp / LINE / Instagram 重做)。頂欄品牌名、字型、色票都各走各的,
-改之前不用再去對 ScrollScore。
+**版面與配色各走各的,但字型跟其他四個工具一致。** Google Fonts 那一行與
+ScrollScore / SightScore / HarmonyMap / LoudMaster 逐字相同。
 
-- 字型用**系統字**(`--sans`),跟通訊軟體一樣:載入快、在各平台都像原生 App。
-  桌機沒有中文字型時才退回 Noto Sans TC(所以那一行 Google Fonts 還留著)
-- **沒有襯線字**。標題靠字重與字級拉層次,不靠換字族
+- `--sans` = `"Noto Sans TC"` 排第一,後面幾個只是 webfont 還沒到位時的暫代。
+  **不要改成系統字優先**:系統字在 Windows 會退回 Microsoft JhengHei、
+  Android 又各家不同,載 Noto 才能保證每個家長看到的字長得一樣
+- `--serif` = `"Noto Serif TC"`,**只用在「封面」**:頂欄的品牌名與署名頁的大標題。
+  對話介面(泡泡、清單、輸入框)一律用 sans —— 襯線讀起來是「文件」不是「訊息」
 - `--fs-*`:2xl 24 / xl 19 / lg 16 / md 15 / sm 13 / xs 12 / 2xs 11
 - 輸入框字級不得小於 16px(見下面「輸入框與縮放」)
 
 ## 配色
 照通訊軟體的共通做法:**中性的底 + 白色的面 + 一個飽和的重點色 + 少量框線**。
-不再是有顏色的紙。
 
-- **亮色是預設**(`:root`),深色是覆寫(`body.dark`)。三個地方要一起改:
-  `<body>` 開頭的 bootstrap、`applyTheme()`、`themeIsLight()`
+- **只有亮色一套,沒有深色模式**(明確決定過)。沒有主題切換鈕、沒有 `sm_theme`、
+  沒有 `applyTheme()`。這一頁不參與工具箱共用的主題偏好
+- 要加回來的話:不要做切換鈕,掛 `@media (prefers-color-scheme: dark)` 跟著系統走
+  —— 那四個通訊軟體都是這樣,App 裡沒有主題開關
 - 變數名稱沿用舊的語意名,所以元件的程式碼不用動:`--gold` = 重點色、
   `--ivory` = 主要文字、`--panel` = 面。**值換掉就好,不要重新命名**
-- 亮色 `--bg:#F0F2F5` / `--panel:#FFFFFF` / `--gold:#0A7C6B`;
-  深色 `--bg:#0B141A` / `--panel:#1F2C33` / `--gold:#21C7B4`
+- `--bg:#F0F2F5` / `--panel:#FFFFFF` / `--gold:#0A7C6B`
 - 自己的泡泡有自己的一組:`--out-bg` / `--out-ink`。泡泡裡的文字用 `color:inherit`,
   不要寫死 `--ivory`,否則在飽和底色上會看不見
 - `--lesson` 是課堂紀錄的記號色(琥珀),跟重點色分開 —— 一個代表「你/動作」,
   一個代表「這是紀錄」。在自己那側的飽和泡泡上改用半透明白,實心琥珀太吵
-- `sm_theme` 仍與其他四個工具共用同一把 key(使用者的選擇跨工具延續),
-  只是這一頁的值長得不一樣
 
 ## 文案
 寫成紙本聯絡簿的口氣:**署名**、**翻開**、**闔上簿本**、**簿本編號**。
@@ -70,7 +66,7 @@ Messenger / WhatsApp / LINE / Instagram 重做)。頂欄品牌名、字型、色
 - 動態寫進畫面的字(扉頁欄位、錯誤紙條、按鈕的忙碌狀態)不吃 `data-i18n`,
   `applyLanguage()` 結尾要重畫一次
 - **英文介面不附中文對照**。新增文案時 `zh` 與 `en` 兩邊都是必填
-- `sm_lang` 與其他四個工具共用
+- `sm_lang` 與其他四個工具共用(主題偏好 `sm_theme` 這一頁不用)
 
 ## 資料與角色
 - 老師由 `index.html` 的 `TEACHER_EMAILS` 認定。**`firestore.rules` 裡有一份
@@ -218,7 +214,7 @@ Messenger / WhatsApp / LINE / Instagram 重做)。頂欄品牌名、字型、色
   跟瀏覽器快取無關(踩過)
 
 ## 改完要確認的事
-1. 兩種主題 × 兩種語言各看一遍,英文版畫面上不能有中文(語言鈕的「中」除外)
+1. 兩種語言各看一遍,英文版畫面上不能有中文(語言鈕的「中」除外)
 2. 320px 寬不能出現橫向捲軸
 3. 這幾種狀態都要看:未設定、未署名、CDN 連不上、資料庫沒開(規則擋住)、
    家長第一次(取名字)、家長已有簿子、老師的名冊、老師翻開某一本

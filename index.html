@@ -3,16 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- 手機瀏覽器的網址列會吃這個顏色。切換主題時 applyTheme() 會一起改,
-     不然頁面是紙張色、上面那條還是黑的,看起來像沒對齊 -->
+<!-- 手機瀏覽器的網址列會吃這個顏色,要跟頂欄同色 -->
 <meta name="theme-color" content="#FFFFFF">
 <title id="pageTitle">LessonNotes — 琴課小簿</title>
 <meta name="description" content="LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230C0A07'/%3E%3Cpath d='M8 7h16v18H8z' fill='none' stroke='%23EFD48A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12 7v18' stroke='%23EFD48A' stroke-width='2'/%3E%3Cpath d='M16 13h5M16 18h5' stroke='%23EFD48A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- 系統字優先,桌機沒有中文字型時才退回 Noto Sans TC -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- 與 ScrollScore / SightScore / HarmonyMap / LoudMaster 同一行 -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 /* ══ 設計代幣:與 ScrollScore / SightScore / HarmonyMap / LoudMaster / VinylVault
    同一套語意變數,六個工具放在一起看是同一個產品。深色是整個工具箱的共同底色 ══ */
@@ -45,8 +44,13 @@
   --radius-md:16px;
   --radius-lg:18px;
   --radius-pill:999px;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang TC",
-         "Hiragino Sans TC","Microsoft JhengHei","Noto Sans TC",sans-serif;
+  /* 與其他四個工具同一套字。Noto 擺第一:系統字在 Windows 會退回
+     Microsoft JhengHei、Android 又各家不同,載 Noto 才能保證每個家長看到的字
+     長得一樣。後面那幾個只是 webfont 還沒到位時的暫代 */
+  --sans:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC",sans-serif;
+  /* 襯線只用在「封面」:頂欄的品牌名與署名頁的大標題。
+     對話介面裡不用 —— 襯線讀起來是「文件」不是「訊息」 */
+  --serif:"Noto Serif TC",Georgia,serif;
   --fs-2xs:11px;
   --fs-xs:12px;
   --fs-sm:13px;
@@ -56,27 +60,7 @@
   --fs-2xl:24px;
   color-scheme:light;
 }
-/* 夜間:照 WhatsApp 深色模式那種帶點藍的深灰,不是純黑 */
-body.dark{
-  --bg:#0B141A;
-  --panel:#1F2C33;
-  --panel-2:#182229;
-  --gold:#21C7B4;
-  --gold-bright:#59E0D1;
-  --gold-edge:#21C7B4;
-  --out-bg:#0B5F55;
-  --out-ink:#E9EDEF;
-  --lesson:#E8A33D;
-  --ivory:#E9EDEF;
-  --muted:#8696A0;
-  --muted-bright:#AEBAC1;
-  --line:#2A3942;
-  --rule-line:transparent;
-  --danger:#F0806C;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
-  --shadow-md:0 8px 24px rgba(0,0,0,.45);
-  color-scheme:dark;
-}
+
 /* touch-action:manipulation 只關掉「雙擊放大」這個手勢,雙指縮放完全不受影響——
    跟直接鎖 viewport 的 user-scalable=no 不一樣,那個連縮放需求的使用者也會一起擋掉 */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -113,7 +97,8 @@ header{
 .home-link:hover,.home-link:focus-visible{color:var(--gold-bright)}
 /* 品牌名的字級、字距與各斷點與 ScrollScore 完全相同,六個工具的品牌名要長得一模一樣 */
 header h1{
-  font-size:var(--fs-lg);letter-spacing:-.01em;
+  font-family:var(--serif);
+  font-size:var(--fs-lg);letter-spacing:.02em;
   font-weight:700;color:var(--ivory);white-space:nowrap;flex:none;
 }
 header h1 span{color:var(--gold)}
@@ -141,7 +126,7 @@ header h1 span{color:var(--gold)}
 .btn[disabled]{opacity:.5;cursor:default}
 /* 語言鈕與主題鈕統一用正圓形(跟其他五個工具同一套外觀),語言鈕只放文字不放圖示 */
 #langToggle{aspect-ratio:1;padding:0}
-#langToggle[aria-pressed="true"],#themeToggle[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#fff}
+#langToggle[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#fff}
 /* 頂欄的內距與間距跟著寬度連續縮放,不用斷點硬切(照 ScrollScore 的值) */
 @media (max-width:600px){
   header{padding:8px clamp(6px, 2.2vw, 10px);gap:clamp(4px, 1.4vw, 6px);flex-wrap:nowrap}
@@ -164,7 +149,7 @@ main{
 /* 標題字級。
    字級也是字型的一部分:標題靠字重與字級拉層次,不要為了「更醒目」一路放大 */
 h2.title{
-  font-family:var(--sans);font-weight:700;
+  font-family:var(--serif);font-weight:700;
   font-size:clamp(24px, 7vw, 32px);line-height:1.22;
   color:var(--ivory);letter-spacing:.02em;
 }
@@ -309,7 +294,6 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
   background:var(--bg);border:0;border-radius:0;
   padding-bottom:env(safe-area-inset-bottom);
 }
-body.dark #composer{box-shadow:0 -12px 24px -14px rgba(0,0,0,.6)}
 .composer-bar{
   display:flex;align-items:center;gap:10px;width:100%;
   background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-pill);
@@ -538,7 +522,6 @@ body.dark #composer{box-shadow:0 -12px 24px -14px rgba(0,0,0,.6)}
 /* 課堂紀錄是簿子的主體,不只是一句話:左緣一道記號把它跟閒聊分開 */
 .bubble.is-lesson{box-shadow:var(--shadow-sm), inset 3px 0 0 var(--lesson)}
 .row--out .bubble.is-lesson{box-shadow:var(--shadow-sm), inset -3px 0 0 rgba(255,255,255,.55)}
-body.dark .row--out .chip{color:rgba(233,237,239,.75)}
 
 .chip{
   display:inline-block;margin-bottom:6px;
@@ -616,16 +599,6 @@ footer{
 </style>
 </head>
 <body>
-<script>
-/* 主題要在畫面畫出來之前就定下來。這一頁的預設是紙張色,等到模組腳本才套用的話,
-   使用者會先看到一下深色再跳成紙張色。下面 themeIsLight() 的規則跟這裡一模一樣,
-   兩邊要一起改 */
-(function(){
-  try { document.body.classList.toggle("dark", localStorage.getItem("sm_theme") === "dark"); }
-  catch (e) {}
-})();
-</script>
-
 <header>
   <div class="header-left">
     <a href="https://stevenmusic.github.io/" class="home-link" data-i18n-attr="aria-label:homeAria,title:homeAria">
@@ -635,13 +608,6 @@ footer{
     <span class="tagline" data-i18n="tagline">琴課小簿</span>
   </div>
   <div class="header-right">
-    <!-- 主題在前、語言在後,跟其他五個工具的 header-right 同一個順序 -->
-    <button class="btn" id="themeToggle" aria-pressed="false" data-i18n-attr="aria-label:themeToggleLabel,title:themeToggleTitle" title="切換紙張/夜間主題">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9"/>
-        <path d="M12 3a9 9 0 000 18z" fill="currentColor" stroke="none"/>
-      </svg>
-    </button>
     <button class="btn" id="langToggle" aria-pressed="false" data-i18n-attr="aria-label:langToggleLabel,title:langToggleTitle" data-i18n="langToggleText">EN</button>
   </div>
 </header>
@@ -930,7 +896,6 @@ const I18N = {
     metaDescription: "LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿",
     homeAria: "回首頁", homeText: "首頁", tagline: "琴課小簿",
     langToggleText: "EN", langToggleLabel: "切換為英文", langToggleTitle: "切換語言",
-    themeToggleLabel: "夜間模式", themeToggleTitle: "切換紙張/夜間主題",
     eyebrow: "老師與家長的聯絡簿",
     title: "琴課小簿",
     lede: "一本兩邊都看得到的簿子。這堂課練到哪裡、下週要帶什麼、家裡練得順不順，寫在同一頁上，不必再靠訊息翻來翻去。",
@@ -1024,7 +989,6 @@ const I18N = {
     metaDescription: "LessonNotes — a shared lesson notebook for music teachers and families",
     homeAria: "Back to home", homeText: "Home", tagline: "the lesson notebook",
     langToggleText: "中", langToggleLabel: "Switch to Chinese", langToggleTitle: "Switch language",
-    themeToggleLabel: "Night mode", themeToggleTitle: "Switch paper/night theme",
     eyebrow: "For teachers and families",
     title: "The lesson notebook",
     lede: "One notebook both sides can read. What the lesson covered, what to bring next week, how practice went at home — all on the same page, instead of scattered through a chat thread.",
@@ -1157,30 +1121,6 @@ function applyLanguage(lang){
   renderTimeline();
 }
 
-/* ══ 主題 ══
-   sm_theme 是五個工具共用的 key,值只有 "light" / "dark"。同一個 origin,在任一個
-   工具切過主題,其他幾個打開就是同一個。沒存過的時候用本工具自己的預設——共用的是
-   「使用者的選擇」,不是「還沒選之前的預設」。這一頁是聯絡簿,預設是紙張色;
-   其他四個工具預設深色。<body> 開頭那段 bootstrap 的判斷要跟這裡一致。 */
-const THEME_KEY = "sm_theme";
-function themeIsLight(){
-  try {
-    const v = localStorage.getItem(THEME_KEY);
-    if (v === "light" || v === "dark") return v === "light";
-  } catch (e) {}
-  return true;
-}
-function applyTheme(){
-  const on = themeIsLight();
-  document.body.classList.toggle("dark", !on);
-  $("themeToggle").setAttribute("aria-pressed", String(!on));
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", on ? "#FFFFFF" : "#0B141A");
-}
-$("themeToggle").onclick = () => {
-  try { localStorage.setItem(THEME_KEY, themeIsLight() ? "dark" : "light"); } catch (e) {}
-  applyTheme();
-};
 $("langToggle").onclick = () => applyLanguage(LANG === "zh" ? "en" : "zh");
 
 /* ══════════════════════════════════════════════════════════════
@@ -2396,7 +2336,6 @@ function syncHeaderH(){
 }
 addEventListener("resize", syncHeaderH, { passive: true });
 
-applyTheme();
 applyLanguage(LANG);
 syncHeaderH();
 show("out");
