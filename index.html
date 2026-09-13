@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- 手機瀏覽器的網址列會吃這個顏色,要跟頂欄同色 -->
-<meta name="theme-color" content="#FFFFFF">
+<!-- 手機瀏覽器的網址列會吃這個顏色,要跟頂欄同色。兩個 meta 各自掛 media,
+     跟著系統的深淺走,不需要 JS -->
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161209" media="(prefers-color-scheme: dark)">
 <title id="pageTitle">LessonNotes — 琴課小簿</title>
 <meta name="description" content="LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230C0A07'/%3E%3Cpath d='M8 7h16v18H8z' fill='none' stroke='%23EFD48A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12 7v18' stroke='%23EFD48A' stroke-width='2'/%3E%3Cpath d='M16 13h5M16 18h5' stroke='%23EFD48A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -22,31 +24,38 @@
    所以版面與元件的程式碼一行都不用改 —— 只有值換掉。
 
    亮色是預設。通訊軟體都是亮色優先,而這一頁大多時候是在白天、在教室裡看的。 */
+/* ══ 色票 ══
+   淺色:中性的底 + 白色的面 + 一個藍色重點色(通訊軟體的結構)。
+   深色:工具箱家族的黑金,與 ScrollScore / HarmonyMap / LoudMaster 同一組值。
+
+   深色**跟著系統走**,沒有切換鈕 —— Messenger / WhatsApp / LINE / Instagram
+   的 App 裡都沒有主題開關,家長手機設深色就自動深色,頂欄也維持乾淨。
+
+   變數名稱沿用舊的語意名(--gold 等於「重點色」、--ivory 等於「主要文字」),
+   所以版面與元件的程式碼一行都不用改 —— 只有值換掉。 */
 :root{
   --bg:#F0F2F5;          /* 對話的底,中性淺灰 */
   --panel:#FFFFFF;       /* 卡片、對方的泡泡、頂欄 */
-  --panel-2:#E9EDF1;     /* 輸入框、次要填色 */
-  --gold:#0A7C6B;        /* 重點色:按鈕、連結、圖示 */
-  --gold-bright:#09665A;
-  --gold-edge:#0A7C6B;
-  --out-bg:#0A7C6B;      /* 自己的泡泡 */
+  --panel-2:#E7EBF0;     /* 輸入框、次要填色 */
+  --gold:#1667C7;        /* 重點色:按鈕、連結、圖示 */
+  --gold-bright:#10529E;
+  --gold-edge:#1667C7;
+  --out-bg:#1667C7;      /* 自己的泡泡 */
   --out-ink:#FFFFFF;
-  --lesson:#C77700;      /* 課堂紀錄的記號,跟一般訊息分開 */
   --ivory:#111B21;       /* 主要文字 */
   --muted:#667781;
   --muted-bright:#3B4A54;
-  --line:#E3E7EA;
-  --rule-line:transparent;   /* 內頁橫線收掉了,紙張的比喻改用留白處理 */
+  --line:#E1E6EB;
   --danger:#C0392B;
-  --shadow-sm:0 1px 2px rgba(11,20,26,.08);
-  --shadow-md:0 6px 20px rgba(11,20,26,.12);
+  --shadow-sm:0 1px 2px rgba(11,20,26,.10);
+  --shadow-md:0 6px 20px rgba(11,20,26,.14);
   --radius-sm:10px;
   --radius-md:16px;
   --radius-lg:18px;
   --radius-pill:999px;
-  /* 與其他四個工具同一套字。Noto 擺第一:系統字在 Windows 會退回
-     Microsoft JhengHei、Android 又各家不同,載 Noto 才能保證每個家長看到的字
-     長得一樣。後面那幾個只是 webfont 還沒到位時的暫代 */
+  /* 與 ScrollScore / SightScore / HarmonyMap / LoudMaster 同一套字。
+     Noto 擺第一:系統字在 Windows 會退回 Microsoft JhengHei、Android 又各家不同,
+     載 Noto 才能保證每個家長看到的字長得一樣 */
   --sans:"Noto Sans TC",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC",sans-serif;
   /* 襯線只用在「封面」:頂欄的品牌名與署名頁的大標題。
      對話介面裡不用 —— 襯線讀起來是「文件」不是「訊息」 */
@@ -59,6 +68,30 @@
   --fs-xl:19px;
   --fs-2xl:24px;
   color-scheme:light;
+}
+
+/* ══ 深色:工具箱的黑金,值與其他四個工具相同 ══ */
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0C0A07;
+    --panel:#161209;
+    --panel-2:#201A0F;
+    --gold:#C9A24B;
+    --gold-bright:#EFD48A;
+    --gold-edge:#C9A24B;
+    /* 自己的泡泡刻意用「暗金」不是亮金。亮金配近黑字很漂亮,但一整串訊息
+       全是亮金會很吵 —— WhatsApp 深色模式的自己泡泡也是暗綠不是亮綠 */
+    --out-bg:#4A3A15;
+    --out-ink:#F4ECDA;
+    --ivory:#F4ECDA;
+    --muted:#8A7D5F;
+    --muted-bright:#B6A576;
+    --line:#2A2415;
+    --danger:#E08A72;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 8px 24px rgba(0,0,0,.55);
+    color-scheme:dark;
+  }
 }
 
 /* touch-action:manipulation 只關掉「雙擊放大」這個手勢,雙指縮放完全不受影響——
@@ -470,7 +503,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 }
 .roster-item .nm span.waiting{color:var(--gold);font-weight:500}
 .roster-item .side.waiting{color:var(--gold)}
-.roster-item .nm span.tasks-left{color:var(--lesson)}
+.roster-item .nm span.tasks-left{color:var(--gold)}
 
 /* ── 時間軸 ───────────────────────── */
 .timeline{display:grid;gap:10px;margin-bottom:26px}
@@ -520,12 +553,12 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .row--out .bubble{border-bottom-right-radius:6px;background:var(--out-bg);color:var(--out-ink)}
 .row--out .entry-body{color:var(--out-ink)}
 /* 課堂紀錄是簿子的主體,不只是一句話:左緣一道記號把它跟閒聊分開 */
-.bubble.is-lesson{box-shadow:var(--shadow-sm), inset 3px 0 0 var(--lesson)}
+.bubble.is-lesson{box-shadow:var(--shadow-sm), inset 3px 0 0 var(--gold-edge)}
 .row--out .bubble.is-lesson{box-shadow:var(--shadow-sm), inset -3px 0 0 rgba(255,255,255,.55)}
 
 .chip{
   display:inline-block;margin-bottom:6px;
-  color:var(--lesson);font-size:var(--fs-2xs);font-weight:600;
+  color:var(--gold);font-size:var(--fs-2xs);font-weight:600;
   letter-spacing:.02em;
 }
 .row--out .chip{color:rgba(255,255,255,.82)}
