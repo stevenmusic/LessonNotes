@@ -828,7 +828,7 @@ footer{
 <body>
 <header>
   <div class="header-left">
-    <a href="https://stevenmusic.github.io/" class="home-link" data-i18n-attr="aria-label:homeAria,title:homeAria">
+    <a href="https://stevenmusic.github.io/" class="home-link" id="homeLink" data-i18n-attr="aria-label:homeAria,title:homeAria">
       <span aria-hidden="true">←</span><span class="btn-label" data-i18n="homeText">首頁</span>
     </a>
     <h1>Lesson<span>Notes</span></h1>
@@ -850,6 +850,7 @@ footer{
           <b id="whoName">—</b>
           <span class="badge" id="teacherBadge" hidden data-i18n="teacherBadge">老師</span>
         </span>
+        <a class="btn ghost small" id="hubLink" href="https://stevenmusic.github.io/" data-i18n="hubText">其他工具</a>
         <button class="btn ghost small" id="signOutBtn" type="button" data-i18n="signOutText">闔上簿本</button>
       </div>
     </div>
@@ -1210,6 +1211,7 @@ const I18N = {
     rosterWaiting: "家長寫了一句 · {d}",
     roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長", listSep: "、",
     signOutText: "闔上簿本", teacherBadge: "老師", meAria: "目前署名的人",
+    hubText: "其他工具",
     nbMoreAria: "這本簿子的設定",
     copyEntry: "複製", copied: "複製了", copyFail: "複製不了",
     editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
@@ -1304,6 +1306,7 @@ const I18N = {
     rosterWaiting: "The family wrote · {d}",
     roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family", listSep: ", ",
     signOutText: "Close the notebook", teacherBadge: "Teacher", meAria: "Who the notebook is signed to",
+    hubText: "Other tools",
     nbMoreAria: "Notebook settings",
     copyEntry: "Copy", copied: "Copied", copyFail: "Could not copy",
     editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
@@ -1561,6 +1564,10 @@ function whoLabel(){
 
 function renderMe(){
   $("meWrap").hidden = !me;
+  /* 署名之後頂欄不再掛「回首頁」。那是跨工具的路,跟簿本裡的「回到名冊」
+     完全不同層級,兩個 ← 上下疊著看起來像同一件事(踩過)。
+     署名之後這個工具就該站得住,要去別的工具走頭像選單裡的那一條 */
+  $("homeLink").hidden = !!me;
   if (!me) { closeMeMenu(); return; }
   $("whoName").textContent = whoLabel();
   $("teacherBadge").hidden = !amTeacher;
