@@ -39,16 +39,20 @@
   --bg:#F1EEE9;          /* 對話的底,暖灰 */
   --panel:#FFFFFF;       /* 卡片、對方的泡泡、頂欄 */
   --panel-2:#E9E4DC;     /* 輸入框、次要填色 */
-  /* 重點色:霧面的藍綠(莫蘭迪的低彩度 × 蒂芬妮的色相)。
-     真正的蒂芬妮藍 #0ABAB5 太亮,白字壓上去只有 2.2:1,當按鈕或泡泡底色讀不動,
-     所以壓深、降彩度到這個值(白字 5.7:1) */
-  --gold:#3E6D75;
-  --gold-bright:#305760;
-  --gold-edge:#3E6D75;
+  /* 重點色:莫蘭迪的霧藍 —— 低彩度、帶灰,配暖灰底正是他常用的那組對比。
+     白字 6.0:1、當文字壓在底色上 5.1:1,兩種用法都撐得住 */
+  --gold:#45677F;
+  --gold-bright:#35536A;
+  --gold-edge:#45677F;
   /* 自己的泡泡用淡色底 + 深色字,不是實心重點色 —— 一整串飽和色塊會吵,
      淡色底也比較符合「柔和」。三層表面的明度是 白(對方) > 底 > 淡藍綠(自己),
      各自分得開 */
-  --out-bg:#CFE4E1;
+  /* 署名鈕自己一個顏色:比莫蘭迪藍更亮、更藍、對比更高。
+     署名頁上幾乎沒有別的東西,那顆鈕要跳出來;霧面的重點色在那裡會太退。
+     #1669D6 配白字 5.2:1,也貼近 Google 官方按鈕允許的藍 */
+  --cta:#1669D6;
+  --cta-bright:#1157B4;
+  --out-bg:#D7E2EB;
   --out-ink:#2E2B28;
   --ivory:#2E2B28;       /* 主要文字,暖的近黑而不是藍黑 */
   --muted:#7A736B;
@@ -161,6 +165,10 @@ header h1 span{color:var(--gold)}
 .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .btn.primary{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
 .btn.primary:hover{background:var(--gold-bright);border-color:var(--gold-bright)}
+/* 只有署名鈕用更亮的藍。簿本裡的「寫進簿本」「存起來」維持霧面的重點色 ——
+   那些是在表單裡按的,不需要跳出來搶 */
+#signInBtn{background:var(--cta);border-color:var(--cta)}
+#signInBtn:hover{background:var(--cta-bright);border-color:var(--cta-bright)}
 .btn.ghost{border-color:transparent;background:transparent;color:var(--muted-bright)}
 .btn.ghost:hover{background:var(--panel-2)}
 .btn.small{height:32px;padding:0 12px;font-size:var(--fs-sm)}
