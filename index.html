@@ -6,7 +6,7 @@
 <!-- 手機瀏覽器的網址列會吃這個顏色,要跟頂欄同色。兩個 meta 各自掛 media,
      跟著系統的深淺走,不需要 JS -->
 <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#161209" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#2A2217" media="(prefers-color-scheme: dark)">
 <title id="pageTitle">LessonNotes — 琴課小簿</title>
 <meta name="description" content="LessonNotes 琴課小簿 — 音樂老師與家長共用的一本聯絡簿">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230C0A07'/%3E%3Cpath d='M8 7h16v18H8z' fill='none' stroke='%23EFD48A' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12 7v18' stroke='%23EFD48A' stroke-width='2'/%3E%3Cpath d='M16 13h5M16 18h5' stroke='%23EFD48A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -87,8 +87,15 @@
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#0C0A07;
-    --panel:#161209;
-    --panel-2:#201A0F;
+    /* ── 面比家族的原值亮一階,理由跟淺色那邊不照抄 SightScore 是同一個 ──
+       家族的深色是 --panel:#161209,壓在 --bg:#0C0A07 上只有 1.06:1 ——
+       那等於沒有分層,名冊那一列與對方的泡泡會整個融進背景裡(踩過)。
+       那三個工具是「一整片面鋪滿一頁」,分不分得開沒差;對話介面靠三層表面吃飯。
+       #2A2217 對底是 1.26:1(LINE 深色是 1.16、WhatsApp 是 1.30),
+       對自己的泡泡 #4A3A15 還留著 1.42:1,三層各自分得開。
+       **--bg 與 --gold 維持家族原值不動**,那兩個才是黑金的身分 */
+    --panel:#2A2217;
+    --panel-2:#392F21;
     --gold:#C9A24B;
     --gold-bright:#EFD48A;
     --gold-edge:#C9A24B;
@@ -99,7 +106,7 @@
     --ivory:#F4ECDA;
     --muted:#8A7D5F;
     --muted-bright:#B6A576;
-    --line:#2A2415;
+    --line:#403626;   /* 跟著面一起亮,不然列與列之間那條線會看不見 */
     --danger:#E08A72;
     --shadow-sm:0 1px 2px rgba(0,0,0,.4);
     --shadow-md:0 8px 24px rgba(0,0,0,.55);
