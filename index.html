@@ -445,7 +445,23 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 .entry-acts .danger{color:var(--danger)}
 .entry-acts .danger:hover,.entry-acts .danger:focus-visible{color:var(--danger);background:var(--panel-2)}
 .entry-acts .q{font-size:var(--fs-sm);color:var(--ivory);padding:6px 4px}
-@media (pointer:coarse){ .more-btn{padding:6px 10px} .entry-acts button{padding:9px 12px} }
+@media (pointer:coarse){ .entry-acts button{padding:9px 12px} }
+/* 手機靠長按,不掛那顆 ⋯ —— 每一筆都掛一顆會把時間軸塞滿,也容易誤按。
+   桌機沒有長按,所以滑過那一列才浮出來(Tab 到它也會出現),右鍵一樣叫得出來 */
+@media (pointer:coarse){ .more-btn{display:none} }
+@media (hover:hover) and (pointer:fine){
+  .more-btn{opacity:0;transition:opacity .15s}
+  .row:hover .more-btn,
+  .more-btn:focus-visible,
+  .more-btn[aria-expanded="true"]{opacity:1}
+}
+/* 選單打開時把那一筆圈起來,不然選單長在下面,看不出是哪一筆的 */
+.bubble.is-acted{box-shadow:0 0 0 2px var(--gold)}
+/* 手機上泡泡的文字不給選:長按被我們接走了,兩邊搶會跳出系統的選取放大鏡。
+   要抄字走選單裡的「複製」。桌機維持可以選 */
+@media (pointer:coarse){
+  .bubble{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+}
 .entry-edit{display:grid;gap:8px}
 .entry-edit textarea{min-height:80px}
 .entry-edit .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -1153,7 +1169,6 @@ const I18N = {
     replyPlaceholder: "想跟老師說的話…",
     teacherReplyPlaceholder: "想跟家長說的話…",
     sendTeacher: "寫進簿本",
-    sendParent: "寫上去",
     sending: "正在寫入…",
     emptyTeacher: "這一頁還是空白的。寫下第一堂課吧。",
     emptyParent: "老師還沒寫下第一堂課。有話想先跟老師說，直接寫在下面就可以。",
@@ -1162,6 +1177,7 @@ const I18N = {
     roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長", listSep: "、",
     signOutText: "闔上簿本", teacherBadge: "老師", meAria: "目前署名的人",
     nbMoreAria: "這本簿子的設定",
+    copyEntry: "複製", copied: "複製了", copyFail: "複製不了",
     editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
     edited: "已修改",
     taskLabel: "這週要練的（一行一項，可以不填）",
@@ -1174,7 +1190,7 @@ const I18N = {
     archiveAria: "封存{name}的簿子", unarchiveAria: "取回{name}的簿子",
     archivedTag: "已封存", showArchived: "顯示已封存的（{n}）", hideArchived: "收起已封存的",
     errDel: "刪不掉。重新整理這一頁再試一次。",
-    composerHint: "寫點什麼…", composerCollapse: "收起",
+    composerCollapse: "收起",
     recStart: "錄一段", recVideo: "錄一段影片", recStop: "停下來",
     addPhoto: "加一張照片", attachRemove: "移除",
     videoReady: "影片 {d}", playVideo: "看這段影片 · {d}", uploading: "正在送出… {p}%",
@@ -1247,7 +1263,6 @@ const I18N = {
     replyPlaceholder: "Anything for the teacher…",
     teacherReplyPlaceholder: "Anything you want to tell the family…",
     sendTeacher: "Write it in",
-    sendParent: "Write it in",
     sending: "Writing…",
     emptyTeacher: "This page is still blank. Write up the first lesson.",
     emptyParent: "The teacher hasn't written up a lesson yet. If there is something you want to say first, just write it below.",
@@ -1256,6 +1271,7 @@ const I18N = {
     roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family", listSep: ", ",
     signOutText: "Close the notebook", teacherBadge: "Teacher", meAria: "Who the notebook is signed to",
     nbMoreAria: "Notebook settings",
+    copyEntry: "Copy", copied: "Copied", copyFail: "Could not copy",
     editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
     edited: "edited",
     taskLabel: "To practise this week (one per line, optional)",
@@ -1268,7 +1284,7 @@ const I18N = {
     archiveAria: "Archive {name}'s notebook", unarchiveAria: "Bring back {name}'s notebook",
     archivedTag: "Archived", showArchived: "Show archived ({n})", hideArchived: "Hide archived",
     errDel: "Couldn't delete it. Reload the page and try again.",
-    composerHint: "Write something…", composerCollapse: "Close",
+    composerCollapse: "Close",
     recStart: "Record", recVideo: "Record video", recStop: "Stop",
     addPhoto: "Add a photo", attachRemove: "Remove",
     videoReady: "Video {d}", playVideo: "Play this video · {d}", uploading: "Sending… {p}%",
@@ -1383,7 +1399,8 @@ let stopStudents = null;
    多一層選擇等於每回一句話都要先想「我現在是哪一種」。
    現在:打字 = 回一句,按那顆本子鈕 = 寫課堂紀錄,模式由入口決定 */
 let composerMode = "reply";          // "reply" | "lesson"
-let trayOpen = false;                // 回一句時「＋」有沒有打開附件托盤
+let trayOpen = false;
+let sending = false;                 // 擋住連按兩下送出兩筆                // 回一句時「＋」有沒有打開附件托盤
 /* 課堂紀錄寫在 #bodyInput,回一句寫在底下那條 #replyInput */
 function bodyEl(){ return isLesson() ? $("bodyInput") : $("replyInput"); }
 /* 正在錄的時候把附件托盤收起來,那三顆鈕這時候按了也沒用,
@@ -1798,6 +1815,58 @@ function renderComposer(){
   if (!btn.dataset.busy) btn.textContent = t("sendTeacher");
 }
 
+/* 長按泡泡叫出「複製 / 改 / 刪」—— 每一個通訊軟體都是這個手勢,
+   比每一筆都掛一顆 ⋯ 好按得多,時間軸也乾淨。
+   滑鼠不用長按(走右鍵),手指移動超過 8px 就取消 —— 那是在捲簿本 */
+let actsJustOpened = false;   // 長按那一下後面會補一個 click,不要讓它立刻把選單關掉
+function closeActs(){
+  if (openActsId === null && confirmDelId === null) return;
+  openActsId = null; confirmDelId = null;
+  renderTimeline();
+}
+document.addEventListener("click", e => {
+  if (openActsId === null) return;
+  /* 長按那一下後面瀏覽器會補一個 click,只吞掉「下一個」那一次就好。
+     用計時器當唯一的判斷會連使用者真的想關掉的那一下也一起吞掉(踩過) */
+  if (actsJustOpened) { actsJustOpened = false; return; }
+  const col = e.target.closest && e.target.closest(".entry-acts, .more-btn, .bubble");
+  if (!col) closeActs();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeActs(); });
+
+function wireLongPress(el, fire){
+  let timer = null, x0 = 0, y0 = 0;
+  const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+  el.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse") return;
+    x0 = e.clientX; y0 = e.clientY;
+    cancel();
+    timer = setTimeout(() => {
+      timer = null;
+      /* 長按放開之後瀏覽器會補一個 click,吞掉那一次就好;
+         萬一沒補,600ms 後自己解除,不要卡住下一次真的點擊 */
+      actsJustOpened = true;
+      setTimeout(() => { actsJustOpened = false; }, 600);
+      fire();
+    }, 480);
+  });
+  el.addEventListener("pointermove", e => {
+    if (timer && (Math.abs(e.clientX - x0) > 8 || Math.abs(e.clientY - y0) > 8)) cancel();
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(k => el.addEventListener(k, cancel));
+  // 桌機的右鍵,以及某些瀏覽器長按後補的那一發
+  /* 右鍵不必設那個旗標:滑鼠的右鍵後面不會補一個 click,
+     設了反而會把使用者接下來真的想關掉的那一下吞掉(踩過) */
+  el.addEventListener("contextmenu", e => { e.preventDefault(); cancel(); fire(); });
+}
+
+/* 複製出去的是「看得到的那些字」:內文加上作業清單 */
+function entryText(en){
+  const bits = [en.body || ""];
+  (en.tasks || []).forEach(x => bits.push("・" + x.t));
+  return bits.join("\n").trim();
+}
+
 function renderTimeline(){
   const box = $("timeline");
   box.textContent = "";
@@ -1898,23 +1967,29 @@ function renderTimeline(){
       meta.appendChild(ed);
     }
     const mine = canEdit(en), able = canDelete(en);
-    if (mine || able) {
-      const more = document.createElement("button");
-      more.type = "button";
-      more.className = "more-btn";
-      more.textContent = "\u22EF";
-      more.setAttribute("aria-label", t("more"));
-      more.setAttribute("aria-expanded", String(openActsId === en.id));
-      more.onclick = () => {
-        openActsId = openActsId === en.id ? null : en.id;
-        confirmDelId = null;
-        renderTimeline();
-      };
-      meta.appendChild(more);
-    }
+    /* 每一筆都可以長按 —— 至少複製得了。改與刪只有作者本人有 */
+    if (openActsId === en.id) bubble.classList.add("is-acted");
+    wireLongPress(bubble, () => {
+      if (editingId === en.id) return;
+      openActsId = en.id;
+      confirmDelId = null;
+      renderTimeline();
+    });
+    const more = document.createElement("button");
+    more.type = "button";
+    more.className = "more-btn";
+    more.textContent = "\u22EF";
+    more.setAttribute("aria-label", t("more"));
+    more.setAttribute("aria-expanded", String(openActsId === en.id));
+    more.onclick = () => {
+      openActsId = openActsId === en.id ? null : en.id;
+      confirmDelId = null;
+      renderTimeline();
+    };
+    meta.appendChild(more);
     col.appendChild(meta);
 
-    if (openActsId === en.id && (mine || able) && editingId !== en.id) {
+    if (openActsId === en.id && editingId !== en.id) {
       const acts = document.createElement("div");
       acts.className = "entry-acts";
       if (confirmDelId === en.id) {
@@ -1928,6 +2003,19 @@ function renderTimeline(){
         no.onclick = () => { confirmDelId = null; renderTimeline(); };
         acts.append(q, yes, no);
       } else {
+        /* 複製誰都有。手機上泡泡的文字選不起來(長按被我們接走了),
+           少了這一顆就沒辦法把譜名、小節數抄去別的地方 */
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          const cp = document.createElement("button");
+          cp.type = "button"; cp.textContent = t("copyEntry");
+          cp.onclick = () => {
+            navigator.clipboard.writeText(entryText(en)).then(() => {
+              cp.textContent = t("copied");
+              setTimeout(() => { openActsId = null; renderTimeline(); }, 700);
+            }).catch(() => { cp.textContent = t("copyFail"); });
+          };
+          acts.appendChild(cp);
+        }
         if (mine) {
           const ed = document.createElement("button");
           ed.type = "button"; ed.textContent = t("editEntry");
@@ -2674,9 +2762,12 @@ $("sendBtn").onclick = async () => {
   const taskText = isLesson() ? $("taskInput").value.trim() : "";
   // 只錄一段、或只出作業不打字,都該送得出去
   if (!text && !pending && !taskText) { ta.focus(); return; }
+  if (sending) return;   // 連按兩下會送出兩筆 —— 那一條上的送出鈕跟這顆是同一個處理函式
+  sending = true;
   slipMsg("sendErr", "sendErrText", null);
   const btn = $("sendBtn");
   btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("sending");
+  $("replySend").disabled = true;
   try {
     await addEntry(text);
     $("bodyInput").value = "";
@@ -2694,8 +2785,10 @@ $("sendBtn").onclick = async () => {
       : (e && String(e.code || "").indexOf("storage/") === 0) ? "errNoStorage"
       : dbErrKey(e));
   } finally {
+    sending = false;
     btn.disabled = false; delete btn.dataset.busy;
     btn.textContent = t("sendTeacher");
+    $("replySend").disabled = false;
   }
 };
 
