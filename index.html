@@ -433,19 +433,31 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 }
 .more-btn:hover,.more-btn:focus-visible{color:var(--gold-bright);outline:none}
 .more-btn[aria-expanded="true"]{color:var(--gold)}
+/* 長按之後的選單是**浮在畫面上**的,不是插在時間軸裡的一列 ——
+   插在裡面的話它會把底下的訊息整個往下推,看起來像文字自己跑掉了。
+   用 position:fixed(不是 absolute):#nbScroll 有 overflow,
+   absolute 會被裁掉,fixed 才跑得出去。位置交給 placeActs() 算 */
+.acts-scrim{position:fixed;inset:0;z-index:39;background:transparent}
 .entry-acts{
-  display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:4px 0 0;
+  position:fixed;z-index:40;visibility:hidden;
+  display:flex;flex-direction:column;gap:2px;
+  min-width:148px;max-width:min(260px, calc(100vw - 20px));
+  padding:6px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-md);
 }
-.row--out .entry-acts{justify-content:flex-end}
 .entry-acts button{
-  background:none;border:0;padding:6px 10px;cursor:pointer;
-  font-family:inherit;font-size:var(--fs-sm);color:var(--muted-bright);border-radius:6px;
+  background:none;border:0;padding:10px 14px;cursor:pointer;text-align:left;
+  font-family:inherit;font-size:var(--fs-lg);color:var(--ivory);border-radius:9px;
 }
-.entry-acts button:hover,.entry-acts button:focus-visible{color:var(--gold-bright);background:var(--panel-2);outline:none}
+.entry-acts button:hover,.entry-acts button:focus-visible{background:var(--panel-2);outline:none}
 .entry-acts .danger{color:var(--danger)}
 .entry-acts .danger:hover,.entry-acts .danger:focus-visible{color:var(--danger);background:var(--panel-2)}
-.entry-acts .q{font-size:var(--fs-sm);color:var(--ivory);padding:6px 4px}
-@media (pointer:coarse){ .entry-acts button{padding:9px 12px} }
+.entry-acts .q{
+  font-size:var(--fs-sm);color:var(--muted-bright);
+  padding:8px 14px 6px;border-bottom:1px solid var(--line);margin-bottom:4px;
+}
+@media (pointer:coarse){ .entry-acts button{padding:12px 14px} }
 /* 手機靠長按,不掛那顆 ⋯ —— 每一筆都掛一顆會把時間軸塞滿,也容易誤按。
    桌機沒有長按,所以滑過那一列才浮出來(Tab 到它也會出現),右鍵一樣叫得出來 */
 @media (pointer:coarse){ .more-btn{display:none} }
@@ -1818,6 +1830,27 @@ function renderComposer(){
 /* 長按泡泡叫出「複製 / 改 / 刪」—— 每一個通訊軟體都是這個手勢,
    比每一筆都掛一顆 ⋯ 好按得多,時間軸也乾淨。
    滑鼠不用長按(走右鍵),手指移動超過 8px 就取消 —— 那是在捲簿本 */
+/* 把浮動選單放到泡泡旁邊:優先放上面,上面塞不下就放下面,
+   左右跟著訊息那一側對齊,再夾在畫面裡不要超出去 */
+function placeActs(acts){
+  const b = acts._anchor;
+  if (!b) return;
+  const br = b.getBoundingClientRect();
+  const ar = acts.getBoundingClientRect();
+  const gap = 8, edge = 10;
+  const headBottom = (document.querySelector("header") || {}).getBoundingClientRect
+    ? document.querySelector("header").getBoundingClientRect().bottom : 0;
+  let top = br.top - ar.height - gap;
+  if (top < headBottom + edge) top = br.bottom + gap;          // 上面放不下就放下面
+  top = Math.min(top, window.innerHeight - ar.height - edge);  // 也不能被輸入框蓋掉
+  top = Math.max(top, headBottom + edge);
+  let left = acts._right ? br.right - ar.width : br.left;
+  left = Math.min(Math.max(edge, left), window.innerWidth - ar.width - edge);
+  acts.style.top = Math.round(top) + "px";
+  acts.style.left = Math.round(left) + "px";
+  acts.style.visibility = "visible";
+}
+
 let actsJustOpened = false;   // 長按那一下後面會補一個 click,不要讓它立刻把選單關掉
 function closeActs(){
   if (openActsId === null && confirmDelId === null) return;
@@ -1833,6 +1866,9 @@ document.addEventListener("click", e => {
   if (!col) closeActs();
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeActs(); });
+/* 浮動的選單不跟著內容捲,捲了就收起來(通訊軟體也是這樣) */
+$("nbScroll").addEventListener("scroll", () => { if (openActsId !== null) closeActs(); }, { passive: true });
+window.addEventListener("resize", () => { if (openActsId !== null) closeActs(); });
 
 function wireLongPress(el, fire){
   let timer = null, x0 = 0, y0 = 0;
@@ -2029,12 +2065,26 @@ function renderTimeline(){
           acts.appendChild(del);
         }
       }
+      acts._anchor = bubble;
+      acts._right = out;          // 自己那一側靠右對齊,對方那一側靠左
       col.appendChild(acts);
     }
 
     row.appendChild(col);
     box.appendChild(row);
   });
+
+  /* 浮動選單要等它真的進到畫面裡才量得到位置,所以放在最後 */
+  const acts = box.querySelector(".entry-acts");
+  if (acts) {
+    /* 選單打開時蓋一層透明的幕:點畫面上任何地方都收得起來,
+       而且不會不小心按到底下的訊息 —— 浮動選單蓋住的那一塊本來就按不得 */
+    const scrim = document.createElement("div");
+    scrim.className = "acts-scrim";
+    scrim.onclick = () => closeActs();
+    box.appendChild(scrim);
+    placeActs(acts);
+  }
 
   /* 打開簿本、或自己剛寫完,要停在最新的一筆 —— 通訊軟體都是這樣,
      不會讓你從三個月前開始捲。但使用者正在往上翻舊紀錄時不能硬把他拉回來,
