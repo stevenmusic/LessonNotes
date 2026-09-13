@@ -372,7 +372,8 @@ body.nb-mode main{
   flex:1;min-height:0;display:flex;flex-direction:column;
   padding-top:10px;padding-bottom:0;
 }
-body.nb-mode footer{display:none}   /* 聊天畫面底下不放頁尾,那一列要留給輸入框 */
+body.nb-mode footer{display:none}
+body.list-mode main{padding-top:14px}   /* 聊天畫面底下不放頁尾,那一列要留給輸入框 */
 body.nb-mode #viewNotebook{flex:1;min-height:0;display:flex;flex-direction:column}
 body.nb-mode .nb-head{position:static}   /* 不再需要 sticky,它本來就一直在上面 */
 body.nb-mode .nb-scroll{
@@ -625,6 +626,15 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 /* ── 名冊 ───────────────────────── */
 /* 對話清單:頭像 + 名字 + 最後一句 + 時間,跟所有通訊軟體一樣。
    整份清單是一張白色的面,列與列之間只有一條細線 —— 不是一堆各自獨立的卡片 */
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+/* 只有真的有人在等回覆時才出現的那一行。沒人在等的時候名冊上一個字都沒有 */
+.roster-waiting{
+  font-size:var(--fs-sm);color:var(--gold);font-weight:500;
+  margin:0 2px 10px;
+}
 .roster{
   background:var(--panel);border-radius:var(--radius-md);
   overflow:hidden;box-shadow:var(--shadow-sm);
@@ -958,13 +968,11 @@ footer{
 
   <!-- ══ 老師:名冊 ══ -->
   <section id="viewRoster" hidden>
-    <div class="nb-head">
-      <div class="t">
-        <h2 data-i18n="rosterTitle">名冊</h2>
-        <p class="slot" id="rosterCount"></p>
-      </div>
-    </div>
-    <div class="rule"></div>
+    <!-- 名冊不掛抬頭,也不寫「N 本簿子」:頂欄已經說了這是哪個工具,
+         有幾本數一眼就知道。清單直接開始,版面乾淨 —— 通訊軟體的對話清單
+         也是一進去就是清單。標題留在 DOM 裡給讀螢幕的人 -->
+    <h2 class="sr-only" data-i18n="rosterTitle">名冊</h2>
+    <p class="roster-waiting" id="rosterCount" hidden></p>
     <div class="roster" id="roster"></div>
     <div class="empty" id="rosterEmpty" hidden data-i18n="rosterEmpty">還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。</div>
     <div class="slip warn" id="rosterErr" hidden>
@@ -1182,8 +1190,7 @@ const I18N = {
     nameEmpty: "還沒寫名字。",
     editName: "改名字", saveName: "存起來", cancel: "取消",
     rosterTitle: "名冊",
-    rosterCount: "{n} 本簿子",
-    rosterWaitingCount: "{n} 本簿子 · {k} 本在等你回",
+    rosterWaitingCount: "{k} 本在等你回",
     rosterEmpty: "還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。",
     rosterNever: "還沒有任何紀錄",
     rosterLast: "最後一筆 {d}",
@@ -1277,8 +1284,7 @@ const I18N = {
     nameEmpty: "The name is still blank.",
     editName: "Rename", saveName: "Save", cancel: "Cancel",
     rosterTitle: "The register",
-    rosterCount: "{n} notebooks",
-    rosterWaitingCount: "{n} notebooks · {k} waiting for you",
+    rosterWaitingCount: "{k} waiting for you",
     rosterEmpty: "No family has signed in yet. Once a parent signs in with Google, their name appears here.",
     rosterNever: "Nothing written yet",
     rosterLast: "Last entry {d}",
@@ -1503,6 +1509,9 @@ function show(name){
   /* 只有簿本那一頁是「整頁不捲、時間軸自己捲」的聊天版面。
      名冊與署名頁還是一般的文件,照常捲、照常有頁尾 */
   document.body.classList.toggle("nb-mode", name === "notebook");
+  /* 名冊上面那一段留白是給署名頁的大標題用的。清單這一頁沒有標題了,
+     留著就只是一條空帶子 —— 通訊軟體的對話清單也是貼著頂欄開始 */
+  document.body.classList.toggle("list-mode", name === "roster");
   if (name === "out") renderBoot();
 }
 
@@ -1655,9 +1664,11 @@ function renderRoster(){
     return String(a.name || "").localeCompare(String(b.name || ""), LANG === "en" ? "en" : "zh-Hant");
   });
   const waiting = list.filter(isWaiting).length;
-  $("rosterCount").textContent = !list.length ? ""
-    : (waiting ? t("rosterWaitingCount", { n: list.length, k: waiting })
-               : t("rosterCount", { n: list.length }));
+  /* 只在真的有人在等回覆的時候出現。「共 N 本」對誰都沒有用 ——
+     有幾本數一眼就知道,但「有 3 本在等你」是會漏掉的事 */
+  const cnt = $("rosterCount");
+  cnt.hidden = !waiting;
+  cnt.textContent = waiting ? t("rosterWaitingCount", { k: waiting }) : "";
   // 家長只有在不只一個孩子時才會看到這一頁,標題與按鈕都要換成家長的說法
   document.querySelector('#viewRoster h2').textContent = amTeacher ? t("rosterTitle") : t("myKids");
   $("addKidBtn").hidden = amTeacher;
