@@ -328,8 +328,8 @@ input[type="text"],input[type="date"],textarea{
 textarea{min-height:96px;resize:vertical;font-size:var(--fs-lg);line-height:1.75}
 /* 課堂紀錄那格一次要寫好幾行,96px 一眼看不完自己寫了什麼。
    高度另外由 autoGrow() 跟著內容長,這裡只定起跳的高度 */
-#bodyInput{min-height:132px}
-#taskInput{min-height:116px}
+#bodyInput{min-height:168px}
+#taskInput{min-height:104px}
 input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.14)}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .field-row{margin-bottom:16px}
@@ -370,51 +370,58 @@ body.nb-mode .nb-scroll{
 }
 body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 
-/* ── 輸入框:收合時只有一條,點了才長出完整表單 ──
-   展開的表單(上課日期、作業、三顆附件鈕)很高,所以一定要能收起來 */
+/* ── 底下那一列永遠是一個真的輸入框 ──
+   通訊軟體的輸入框永遠是輸入框,沒有「點了才展開」的殼:少一次點擊,
+   也不必猜那條東西是什麼。要收起來的只有課堂紀錄那張表單 */
 #composer{
   z-index:12;margin-top:10px;
   background:var(--bg);border:0;border-radius:0;
   padding-bottom:env(safe-area-inset-bottom);
+  display:flex;flex-direction:column;min-height:0;
 }
-.composer-row{display:flex;align-items:center;gap:8px;margin:8px 0}
-.composer-bar{
-  display:flex;align-items:center;gap:10px;flex:1;min-width:0;
-  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-pill);
-  padding:12px 18px;cursor:text;
-  font-family:inherit;font-size:var(--fs-lg);color:var(--muted);text-align:left;
+#composer .sheet-body{display:flex;flex-direction:column;min-height:0}
+.composer-row{display:flex;align-items:flex-end;gap:8px;margin:8px 0}
+.reply-input{
+  flex:1;min-width:0;
+  min-height:46px;max-height:40dvh;resize:none;overflow-y:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:23px;
+  padding:12px 16px;
+  font-family:inherit;font-size:var(--fs-lg);line-height:1.5;color:var(--ivory);
   box-shadow:var(--shadow-sm);
 }
-.composer-bar:hover{background:var(--panel-2)}
-.composer-bar svg{width:19px;height:19px;flex:none;color:var(--gold)}
-.composer-bar .ph{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* 課堂紀錄那顆鈕。實心重點色 —— 它是老師在這一頁的主要動作,
-   而「回一句」已經不需要任何按鈕了(直接打字就是) */
-.lesson-btn{
-  flex:none;width:46px;height:46px;align-self:center;
+.reply-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.14)}
+.att-btn.round{align-self:flex-end}
+/* 課堂紀錄那顆鈕與送出鈕輪流出現:輸入框空的時候是「寫下這堂課」,
+   有東西要送才換成送出 —— WhatsApp 的麥克風/送出也是這樣換。
+   兩顆同時掛著的話 320px 上就沒剩多少地方打字了 */
+.lesson-btn,.send-mini{
+  flex:none;width:46px;height:46px;align-self:flex-end;
   display:grid;place-items:center;
   background:var(--gold);border:1px solid var(--gold);border-radius:50%;
   color:#fff;cursor:pointer;box-shadow:var(--shadow-sm);
   transition:background .15s,border-color .15s;
 }
-.lesson-btn svg{width:21px;height:21px}
-.lesson-btn:hover{background:var(--gold-bright);border-color:var(--gold-bright)}
-.lesson-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-#composer.is-open .composer-row{display:none}
-#composer:not(.is-open) .sheet-head,
-#composer:not(.is-open) .sheet-body{display:none}
-#composer.is-open{
+.lesson-btn svg,.send-mini svg{width:21px;height:21px}
+.lesson-btn:hover,.send-mini:hover{background:var(--gold-bright);border-color:var(--gold-bright)}
+.lesson-btn:focus-visible,.send-mini:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+#composer:not(.is-lesson){box-shadow:none;overflow:visible}
+#composer:not(.is-lesson) .sheet-body{padding:0}
+#composer.is-lesson{
   background:var(--panel);border:1px solid var(--line);
   border-radius:var(--radius-md);box-shadow:var(--shadow-md);margin-bottom:8px;
 }
-/* 表單再長也不能吃掉整個畫面:欄位這一段自己捲,
-   送出鈕與錯誤紙條留在外面,永遠按得到。
-   上限要放得下「日期 + 內文 + 作業 + 三顆附件鈕」的預設高度 ——
-   切太小的話附件鈕會掉到捲動區外面,看起來像消失了(踩過) */
-body.nb-mode .composer-fields{max-height:58dvh;overflow-y:auto;overscroll-behavior:contain}
+/* 課堂紀錄的表單自己捲,**上限用 flex 算,不要寫死 dvh** ——
+   寫死的話在瀏覽器工具列比較高的手機上會剛好切掉最底下那一段(踩過)。
+   送出鈕與附件托盤都在這個捲動區外面,永遠按得到 */
+#composer.is-lesson{max-height:82dvh}
+.composer-fields{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+/* 上課日期收成一列,省下一整行 */
+.field-row.inline{display:flex;align-items:center;gap:12px}
+.field-row.inline .lbl{margin:0;flex:none}
+.field-row.inline input{flex:1;min-width:0}
 @media (pointer:coarse){
-  .composer-bar{padding:16px}
-  .lesson-btn{width:54px;height:54px}
+  .reply-input{min-height:52px;border-radius:26px}
+  .lesson-btn,.send-mini{width:52px;height:52px}
 }
 
 /* ── 一筆紀錄上的「改 / 刪」───────────────────────── */
@@ -468,7 +475,7 @@ body.nb-mode .composer-fields{max-height:58dvh;overflow-y:auto;overscroll-behavi
 .roster-item .nm span.tasks-left{color:var(--gold)}
 
 /* ── 附件:錄音與照片 ───────────────────────── */
-.attach-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.attach-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;flex:none}
 /* 三顆附件鈕只放圖示。「錄一段」「錄一段影片」「加一張照片」三段文字
    在手機上會換行成兩列,佔掉的版面比它們說明的事情還多;
    麥克風、攝影機、相機這三個圖示本來就是通訊軟體的共通語言。
@@ -982,39 +989,34 @@ footer{
     </div>
 
     <section class="sheet sheet--plain" id="composer">
-      <div class="composer-row" id="composerRow">
-        <button class="composer-bar" type="button" id="composerBar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16"/><path d="M14.5 4.5l5 5L9 20H4v-5z"/></svg>
-          <span class="ph" id="composerPh">寫點什麼…</span>
-        </button>
-        <!-- 課堂紀錄自己一顆鈕。回一句是零步驟(直接打字),寫課才多按一下 -->
-        <button class="lesson-btn" type="button" id="lessonBtn" hidden
-                data-i18n-attr="aria-label:composerTeacher,title:composerTeacher">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13h5"/></svg>
-        </button>
-      </div>
-      <div class="sheet-head">
+      <!-- 課堂紀錄的抬頭與表單:只有按了本子鈕才出現 -->
+      <div class="sheet-head" id="sheetHead" hidden>
         <span class="mark">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13h5"/></svg>
         </span>
         <h3 id="composerTitle">寫下這堂課</h3>
       </div>
       <div class="sheet-body">
-        <div class="composer-fields" id="composerFields">
-        <div class="field-row" id="dateRow" hidden>
-          <label class="lbl" for="dateInput" data-i18n="lessonDateLabel">上課日期</label>
-          <input type="date" id="dateInput">
-        </div>
-        <div class="field-row">
-          <textarea id="bodyInput" maxlength="2000"></textarea>
-        </div>
-        <div class="field-row" id="taskRow" hidden>
-          <label class="lbl" for="taskInput" data-i18n="taskLabel">這週要練的（一行一項，可以不填）</label>
-          <textarea id="taskInput" maxlength="1000"
-                    data-i18n-attr="placeholder:taskPlaceholder"
-                    placeholder="小奏鳴曲 第一樂章 1–32 小節&#10;哈農 No.3　每天兩次&#10;C 大調音階 四個八度"></textarea>
-        </div>
-        <div class="attach-row" id="attachRow">
+        <div class="composer-fields" id="composerFields" hidden>
+          <!-- 上課日期收成一列(標籤在左、日期在右),不佔上下兩行 -->
+          <div class="field-row inline" id="dateRow">
+            <label class="lbl" for="dateInput" data-i18n="lessonDateLabel">上課日期</label>
+            <input type="date" id="dateInput">
+          </div>
+          <div class="field-row">
+            <textarea id="bodyInput" maxlength="2000"></textarea>
+          </div>
+          <div class="field-row" id="taskRow">
+            <label class="lbl" for="taskInput" data-i18n="taskLabel">這週要練的（一行一項，可以不填）</label>
+            <textarea id="taskInput" maxlength="1000"
+                      data-i18n-attr="placeholder:taskPlaceholder"
+                      placeholder="小奏鳴曲 第一樂章 1–32 小節&#10;哈農 No.3　每天兩次&#10;C 大調音階 四個八度"></textarea>
+          </div>
+        </div><!-- /composer-fields -->
+
+        <!-- 附件托盤在捲動區「外面」。放進去的話表單一長它就被切掉,
+             看起來像三顆鈕消失了(踩過)。課堂紀錄時一直在,回一句時按 ＋ 才出現 -->
+        <div class="attach-row" id="attachRow" hidden>
           <button class="att-btn" type="button" id="recBtn"
                   data-i18n-attr="aria-label:recStart,title:recStart">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0"/><path d="M12 18v3"/></svg>
@@ -1029,9 +1031,8 @@ footer{
           </button>
           <input type="file" id="photoInput" accept="image/*" hidden>
         </div>
-        </div><!-- /composer-fields -->
 
-        <!-- 錄製中、剛錄好的那一段、錯誤紙條都留在捲動區外面:
+        <!-- 錄製中、剛錄好的那一段、錯誤紙條:兩種模式共用,而且都在捲動區外面 ——
              正在錄音的時候「停下來」被捲走是最糟的情況 -->
         <video id="recPreview" hidden playsinline muted
                style="width:100%;max-height:30dvh;object-fit:cover;border-radius:8px;margin-top:12px;background:#000"></video>
@@ -1055,11 +1056,30 @@ footer{
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v5"/><path d="M12 17.5v.5"/><circle cx="12" cy="12" r="9"/></svg>
           <span id="sendErrText"></span>
         </div>
-        <div class="form-actions composer-acts">
-          <!-- 收起放在送出鈕旁邊,不在抬頭 —— 手機上拇指在畫面下緣,
-               抬頭那一角要整隻手換位置才按得到。動作列是最下面的最後一列 -->
+
+        <!-- 課堂紀錄的動作列。收起與送出都在畫面最下緣,拇指構得到 -->
+        <div class="form-actions composer-acts" id="composerActs" hidden>
           <button class="btn ghost" type="button" id="composerClose" data-i18n="composerCollapse">收起</button>
           <button class="btn primary" type="button" id="sendBtn">寫進簿本</button>
+        </div>
+
+        <!-- 平常那一列:就是一個真的輸入框,不是「點了才展開」的殼。
+             通訊軟體的輸入框永遠是輸入框,少一次點擊、也不必猜那條東西是什麼 -->
+        <div class="composer-row" id="composerRow">
+          <button class="att-btn round" type="button" id="attToggle"
+                  data-i18n-attr="aria-label:attachMore,title:attachMore">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          </button>
+          <textarea id="replyInput" class="reply-input" rows="1" maxlength="2000"></textarea>
+          <!-- 空的時候讓位給「寫下這堂課」,有東西要送才換成送出 —— WhatsApp 也是這樣換 -->
+          <button class="lesson-btn" type="button" id="lessonBtn" hidden
+                  data-i18n-attr="aria-label:composerTeacher,title:composerTeacher">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v15H4z"/><path d="M8 5v15"/><path d="M12 13h5"/></svg>
+          </button>
+          <button class="send-mini" type="button" id="replySend" hidden
+                  data-i18n-attr="aria-label:sendAria,title:sendAria">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3L10.5 13.5"/><path d="M21 3l-6.8 18-3.7-8.5L2 8.8z"/></svg>
+          </button>
         </div>
       </div>
     </section>
@@ -1130,7 +1150,7 @@ const I18N = {
     composerTeacherReply: "回一句給家長",
     composerParent: "寫給老師",
     lessonPlaceholder: "這堂課練了什麼、進度到哪一小節、下週要帶的譜…",
-    replyPlaceholder: "家裡練得怎麼樣？有什麼想問老師的？",
+    replyPlaceholder: "想跟老師說的話…",
     teacherReplyPlaceholder: "想跟家長說的話…",
     sendTeacher: "寫進簿本",
     sendParent: "寫上去",
@@ -1150,6 +1170,7 @@ const I18N = {
     rosterTasks: "作業 {d}/{n}",
     myKids: "我的孩子", addKid: "加一個孩子",
     archiveShort: "封存", unarchiveShort: "取回",
+    attachMore: "加錄音、影片或照片", sendAria: "寫上去",
     archiveAria: "封存{name}的簿子", unarchiveAria: "取回{name}的簿子",
     archivedTag: "已封存", showArchived: "顯示已封存的（{n}）", hideArchived: "收起已封存的",
     errDel: "刪不掉。重新整理這一頁再試一次。",
@@ -1223,7 +1244,7 @@ const I18N = {
     composerTeacherReply: "Write back to the family",
     composerParent: "Write to the teacher",
     lessonPlaceholder: "What the lesson covered, which bar the piece reached, what to bring next week…",
-    replyPlaceholder: "How did practice go at home? Anything to ask the teacher?",
+    replyPlaceholder: "Anything for the teacher…",
     teacherReplyPlaceholder: "Anything you want to tell the family…",
     sendTeacher: "Write it in",
     sendParent: "Write it in",
@@ -1243,6 +1264,7 @@ const I18N = {
     rosterTasks: "Practice {d}/{n}",
     myKids: "My children", addKid: "Add a child",
     archiveShort: "Archive", unarchiveShort: "Restore",
+    attachMore: "Add a recording, video or photo", sendAria: "Send",
     archiveAria: "Archive {name}'s notebook", unarchiveAria: "Bring back {name}'s notebook",
     archivedTag: "Archived", showArchived: "Show archived ({n})", hideArchived: "Hide archived",
     errDel: "Couldn't delete it. Reload the page and try again.",
@@ -1361,6 +1383,12 @@ let stopStudents = null;
    多一層選擇等於每回一句話都要先想「我現在是哪一種」。
    現在:打字 = 回一句,按那顆本子鈕 = 寫課堂紀錄,模式由入口決定 */
 let composerMode = "reply";          // "reply" | "lesson"
+let trayOpen = false;                // 回一句時「＋」有沒有打開附件托盤
+/* 課堂紀錄寫在 #bodyInput,回一句寫在底下那條 #replyInput */
+function bodyEl(){ return isLesson() ? $("bodyInput") : $("replyInput"); }
+/* 正在錄的時候把附件托盤收起來,那三顆鈕這時候按了也沒用,
+   而且「停下來」要站在最明顯的位置 */
+function recording(){ return !!rec; }
 function isLesson(){ return amTeacher && composerMode === "lesson"; }
 let editingId = null;     // 正在改寫的那一筆
 let confirmDelId = null;  // 正在問「真的刪掉?」的那一筆
@@ -1752,15 +1780,22 @@ function renderComposer(){
   const lesson = isLesson();
   $("composerTitle").textContent = !amTeacher ? t("composerParent")
     : (lesson ? t("composerTeacher") : t("composerTeacherReply"));
-  $("lessonBtn").hidden = !amTeacher;         // 寫課堂紀錄的入口只有老師需要
-  $("dateRow").hidden = !lesson;              // 上課日期只有課堂紀錄要填
-  $("taskRow").hidden = !lesson;              // 作業也是
-  $("bodyInput").placeholder = !amTeacher ? t("replyPlaceholder")
-    : (lesson ? t("lessonPlaceholder") : t("teacherReplyPlaceholder"));
-  $("composerPh").textContent = t("composerHint");
+  box.classList.toggle("is-lesson", lesson);
+  $("sheetHead").hidden = !lesson;
+  $("composerFields").hidden = !lesson;
+  $("composerActs").hidden = !lesson;
+  $("composerRow").hidden = lesson;
+  /* 附件托盤:課堂紀錄時一直在,回一句時按 ＋ 才出現 */
+  $("attachRow").hidden = !(lesson || trayOpen) || recording();
+  $("bodyInput").placeholder = t("lessonPlaceholder");
+  $("replyInput").placeholder = !amTeacher ? t("replyPlaceholder") : t("teacherReplyPlaceholder");
+  /* 「寫下這堂課」與送出鈕輪流出現:輸入框空的時候讓位給前者,
+     有東西要送才換成送出。兩顆同時掛著的話 320px 上就沒剩多少地方打字了 */
+  const has = !!($("replyInput").value.trim() || pending);
+  $("lessonBtn").hidden = lesson || !amTeacher || has;
+  $("replySend").hidden = lesson || !has;
   const btn = $("sendBtn");
-  /* 「寫進簿本」留給課堂紀錄。回一句話用「寫上去」—— 一句話不是一本簿子 */
-  if (!btn.dataset.busy) btn.textContent = lesson ? t("sendTeacher") : t("sendParent");
+  if (!btn.dataset.busy) btn.textContent = t("sendTeacher");
 }
 
 function renderTimeline(){
@@ -2295,10 +2330,12 @@ function clearPending(){
     const el = $(id); el.hidden = true; el.removeAttribute("src"); if (el.load) try { el.load(); } catch (e) {}
   });
   $("photoInput").value = "";
+  renderComposer();   // 沒有附件了,送出鈕要讓位回「寫下這堂課」
 }
 
 function showPending(){
   if (!pending) return clearPending();
+  renderComposer();   // 只錄一段不打字也送得出去,送出鈕要出現
   const box = $("attachPreview");
   box.hidden = false;
   const thumb = $("attachThumb"), au = $("attachAudio"), vi = $("attachVideo");
@@ -2348,7 +2385,7 @@ async function startRec(kind){
     pv.play().catch(() => {});
   }
   $("recLive").hidden = false;
-  $("attachRow").hidden = true;
+  renderComposer();   // 托盤要不要在,由模式決定
   $("recHint").textContent = t("recHint", { s: rec.max });
   $("recTime").textContent = "0:00";
   rec.timer = setInterval(() => {
@@ -2373,8 +2410,8 @@ function finishRec(chunks){
   const pv = $("recPreview");
   pv.hidden = true; pv.srcObject = null;
   $("recLive").hidden = true;
-  $("attachRow").hidden = false;
   rec = null;
+  renderComposer();   // rec 要先清掉,不然 recording() 還是 true,托盤叫不回來
 
   const blob = new Blob(chunks, { type: chunks[0] && chunks[0].type || (kind === "video" ? "video/webm" : "audio/webm") });
   if (!blob.size) return;
@@ -2480,26 +2517,27 @@ function attachNode(en, studentId){
    點那條輸入框 = 回一句,點本子鈕 = 寫課堂紀錄 */
 function openComposer(mode, focus){
   composerMode = mode === "lesson" && amTeacher ? "lesson" : "reply";
-  $("composer").classList.add("is-open");
+  trayOpen = false;
   renderComposer();
   growBoxes();
-  if (focus !== false) setTimeout(() => { $("bodyInput").focus(); }, 30);
+  if (focus !== false) setTimeout(() => { bodyEl().focus(); }, 30);
   toBottom();   // 表單長出來之後仍然停在最新的一筆
 }
 function closeComposer(){
-  $("composer").classList.remove("is-open");
-  composerMode = "reply";   // 下次點那條輸入框就是回一句
+  composerMode = "reply";   // 收起課堂紀錄之後回到那一條輸入框
+  trayOpen = false;
   stopRec();
   renderComposer();
+  growBoxes();
 }
-$("composerBar").onclick = () => openComposer("reply", true);
 $("lessonBtn").onclick = () => openComposer("lesson", true);
 $("composerClose").onclick = () => closeComposer();
+$("attToggle").onclick = () => { trayOpen = !trayOpen; renderComposer(); toBottom(); };
 /* Esc 也收起來。錄到一半按 Esc 會先停下錄音(closeComposer 裡的 stopRec) */
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape") return;
-  if (!$("composer").classList.contains("is-open")) return;
-  closeComposer();
+  if (trayOpen) { trayOpen = false; renderComposer(); return; }
+  if (isLesson()) closeComposer();
 });
 
 /* 輸入框跟著內容長高,寫到第幾行都看得到自己寫了什麼 ——
@@ -2507,12 +2545,22 @@ document.addEventListener("keydown", e => {
    上限收在畫面高度的四成,再高就換成框內自己捲,不然輸入框會把時間軸整個擠掉 */
 function autoGrow(el){
   if (!el) return;
+  el.style.height = "";
+  /* 空的時候不要量。**空的 textarea 的 scrollHeight 會把「會換行的提示語」算進去**,
+     提示語一長,那一條空著就變成兩行高(踩過)。空的交給 CSS 的 min-height */
+  if (!el.value) return;
   const max = Math.max(140, Math.round(window.innerHeight * 0.4));
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight + 2, max) + "px";
 }
-function growBoxes(){ autoGrow($("bodyInput")); autoGrow($("taskInput")); }
+function growBoxes(){ autoGrow($("bodyInput")); autoGrow($("taskInput")); autoGrow($("replyInput")); }
 $("bodyInput").addEventListener("input", e => autoGrow(e.target));
+$("replyInput").addEventListener("input", e => {
+  const stick = nearBottom();
+  autoGrow(e.target);
+  renderComposer();          // 空↔有字:「寫下這堂課」與送出鈕要換過來
+  if (stick) toBottom();     // 框長高會把最新的一筆頂上去
+});
 $("taskInput").addEventListener("input", e => autoGrow(e.target));
 
 $("recBtn").onclick = () => startRec("audio");
@@ -2610,9 +2658,18 @@ $("renameForm").addEventListener("submit", async ev => {
   } finally { btn.disabled = false; }
 });
 
+$("replySend").onclick = () => $("sendBtn").onclick();
+/* 桌機上 Enter 送出、Shift+Enter 換行(通訊軟體的慣例)。
+   手機的 Enter 一律是換行 —— 虛擬鍵盤上沒有 Shift 可以按 */
+$("replyInput").addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
+  if (window.matchMedia("(pointer:coarse)").matches) return;
+  e.preventDefault();
+  $("sendBtn").onclick();
+});
 $("sendBtn").onclick = async () => {
   if (!current) return;
-  const ta = $("bodyInput");
+  const ta = bodyEl();
   const text = ta.value.trim();
   const taskText = isLesson() ? $("taskInput").value.trim() : "";
   // 只錄一段、或只出作業不打字,都該送得出去
@@ -2622,11 +2679,11 @@ $("sendBtn").onclick = async () => {
   btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("sending");
   try {
     await addEntry(text);
-    ta.value = "";
+    $("bodyInput").value = "";
+    $("replyInput").value = "";
     $("taskInput").value = "";
-    growBoxes();          // 清空之後高度也要縮回去,不然留著一格空白
     clearPending();
-    closeComposer();
+    closeComposer();      // 回到那一條輸入框(closeComposer 裡會重算高度)
     stickBottom = true;      // 自己剛寫完,一定要看得到它
     // 時間軸交給 onSnapshot 更新,這裡不要自己塞一筆進去,不然會看到兩筆
   } catch (e) {
@@ -2638,7 +2695,7 @@ $("sendBtn").onclick = async () => {
       : dbErrKey(e));
   } finally {
     btn.disabled = false; delete btn.dataset.busy;
-    btn.textContent = isLesson() ? t("sendTeacher") : t("sendParent");
+    btn.textContent = t("sendTeacher");
   }
 };
 
