@@ -470,7 +470,7 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 }
 .who-bar .me{display:flex;align-items:center;gap:8px;min-width:0}
 .who-bar img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);flex:none}
-.who-bar b{color:var(--muted-bright);font-weight:500;overflow-wrap:anywhere}
+.who-bar b{color:var(--muted-bright);font-weight:500;overflow-wrap:anywhere;min-width:0}
 .who-bar .spacer{flex:1}
 .badge{
   font-size:var(--fs-2xs);color:var(--gold);letter-spacing:.08em;
@@ -910,7 +910,7 @@ footer{
   <div class="who-bar" id="whoBar" hidden>
     <span class="me">
       <img id="whoPhoto" hidden alt="" width="26" height="26" referrerpolicy="no-referrer">
-      <span><span data-i18n="signedAs">目前署名</span>　<b id="whoName">—</b></span>
+      <b id="whoName">—</b>
     </span>
     <span class="badge" id="teacherBadge" hidden data-i18n="teacherBadge">老師</span>
     <span class="spacer"></span>
@@ -993,7 +993,7 @@ const I18N = {
     kindLesson: "課堂紀錄", kindReply: "家長寫的", kindTeacherReply: "老師回覆",
     rosterWaiting: "家長寫了一句 · {d}",
     roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長", listSep: "、",
-    signedAs: "目前署名", signOutText: "闔上簿本", teacherBadge: "老師",
+    signOutText: "闔上簿本", teacherBadge: "老師",
     editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
     edited: "已修改",
     taskLabel: "這週要練的（一行一項，可以不填）",
@@ -1086,7 +1086,7 @@ const I18N = {
     kindLesson: "Lesson note", kindReply: "From the family", kindTeacherReply: "Teacher's note",
     rosterWaiting: "The family wrote · {d}",
     roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family", listSep: ", ",
-    signedAs: "Signed in as", signOutText: "Close the notebook", teacherBadge: "Teacher",
+    signOutText: "Close the notebook", teacherBadge: "Teacher",
     editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
     edited: "edited",
     taskLabel: "To practise this week (one per line, optional)",
@@ -1290,13 +1290,16 @@ function setBusy(on){
 
    帳號認錯了還是看得出來:名字是從「這個帳號自己的簿子」推出來的,
    登錯帳號會看到別的孩子(或是回到取名字那一頁),不會被這行字蓋過去。 */
+/* 底下那一行只寫名字,不加「的家長」也不加「目前署名」——
+   頭像 + 名字已經說明了是誰,而且簿本抬頭就在同一頁上,再寫一次是重複。
+   時間軸上的署名仍然是「{孩子}的家長」,那裡要跟老師那一側分得開 */
 function whoLabel(){
   if (!me) return "—";
   const acct = me.displayName || me.email || "—";
   if (amTeacher) return acct;
-  if (current && current.name) return t("parentOf", { name: current.name });
+  if (current && current.name) return current.name;
   const names = students.map(x => x.name).filter(Boolean);
-  if (names.length) return t("parentOf", { name: names.join(t("listSep")) });
+  if (names.length) return names.join(t("listSep"));
   return acct;   // 還沒取名字的時候只剩帳號可以顯示
 }
 
