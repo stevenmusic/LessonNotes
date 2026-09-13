@@ -34,21 +34,29 @@
    變數名稱沿用舊的語意名(--gold 等於「重點色」、--ivory 等於「主要文字」),
    所以版面與元件的程式碼一行都不用改 —— 只有值換掉。 */
 :root{
-  --bg:#F0F2F5;          /* 對話的底,中性淺灰 */
+  /* 中性色走暖的 —— 灰帶一點米,不是藍調的冷灰。整頁的「暖」有一半是這裡決定的,
+     不是重點色決定的 */
+  --bg:#F1EEE9;          /* 對話的底,暖灰 */
   --panel:#FFFFFF;       /* 卡片、對方的泡泡、頂欄 */
-  --panel-2:#E7EBF0;     /* 輸入框、次要填色 */
-  --gold:#1667C7;        /* 重點色:按鈕、連結、圖示 */
-  --gold-bright:#10529E;
-  --gold-edge:#1667C7;
-  --out-bg:#1667C7;      /* 自己的泡泡 */
-  --out-ink:#FFFFFF;
-  --ivory:#111B21;       /* 主要文字 */
-  --muted:#667781;
-  --muted-bright:#3B4A54;
-  --line:#E1E6EB;
+  --panel-2:#E9E4DC;     /* 輸入框、次要填色 */
+  /* 重點色:霧面的藍綠(莫蘭迪的低彩度 × 蒂芬妮的色相)。
+     真正的蒂芬妮藍 #0ABAB5 太亮,白字壓上去只有 2.2:1,當按鈕或泡泡底色讀不動,
+     所以壓深、降彩度到這個值(白字 5.7:1) */
+  --gold:#3E6D75;
+  --gold-bright:#305760;
+  --gold-edge:#3E6D75;
+  /* 自己的泡泡用淡色底 + 深色字,不是實心重點色 —— 一整串飽和色塊會吵,
+     淡色底也比較符合「柔和」。三層表面的明度是 白(對方) > 底 > 淡藍綠(自己),
+     各自分得開 */
+  --out-bg:#CFE4E1;
+  --out-ink:#2E2B28;
+  --ivory:#2E2B28;       /* 主要文字,暖的近黑而不是藍黑 */
+  --muted:#7A736B;
+  --muted-bright:#55504A;
+  --line:#E4DED5;
   --danger:#C0392B;
-  --shadow-sm:0 1px 2px rgba(11,20,26,.10);
-  --shadow-md:0 6px 20px rgba(11,20,26,.14);
+  --shadow-sm:0 1px 2px rgba(60,52,44,.10);
+  --shadow-md:0 6px 20px rgba(60,52,44,.14);
   --radius-sm:10px;
   --radius-md:16px;
   --radius-lg:18px;
@@ -554,14 +562,14 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .row--out .entry-body{color:var(--out-ink)}
 /* 課堂紀錄是簿子的主體,不只是一句話:左緣一道記號把它跟閒聊分開 */
 .bubble.is-lesson{box-shadow:var(--shadow-sm), inset 3px 0 0 var(--gold-edge)}
-.row--out .bubble.is-lesson{box-shadow:var(--shadow-sm), inset -3px 0 0 rgba(255,255,255,.55)}
+.row--out .bubble.is-lesson{box-shadow:var(--shadow-sm), inset -3px 0 0 var(--gold-edge)}
 
 .chip{
   display:inline-block;margin-bottom:6px;
   color:var(--gold);font-size:var(--fs-2xs);font-weight:600;
   letter-spacing:.02em;
 }
-.row--out .chip{color:rgba(255,255,255,.82)}
+.row--out .chip{color:var(--gold-bright)}
 .entry-body{
   font-size:var(--fs-md);color:var(--ivory);line-height:1.8;
   white-space:pre-wrap;overflow-wrap:anywhere;
