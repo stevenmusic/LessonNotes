@@ -463,15 +463,39 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.85}
 .roster-item .nm span.waiting{color:var(--gold);font-weight:500}
 
 /* ── 誰署名了 + 闔上簿本 ───────────────────────── */
-.who-bar{
-  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
-  margin-top:clamp(22px, 4vw, 30px);padding-top:16px;border-top:1px solid var(--line);
-  font-size:var(--fs-sm);color:var(--muted);
+/* 身分收在頂欄的頭像後面,點了才打開 —— 那四個通訊軟體都是這樣:
+   正常使用的人一輩子按不到一次登出,不該每一頁都佔著位置。
+   但也不能整個拿掉:挑錯 Google 帳號的人會卡在「取名字」那一頁,
+   沒有出口就只能去清瀏覽器的網站資料,或是在錯的帳號底下開出一本空簿子 */
+.me-wrap{position:relative;flex:none}
+.me-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:38px;height:38px;padding:0;flex:none;
+  border:1px solid var(--line);border-radius:50%;
+  background:var(--panel);color:var(--muted-bright);
+  cursor:pointer;overflow:hidden;
+  transition:background .15s,border-color .15s;
 }
-.who-bar .me{display:flex;align-items:center;gap:8px;min-width:0}
-.who-bar img{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);flex:none}
-.who-bar b{color:var(--muted-bright);font-weight:500;overflow-wrap:anywhere;min-width:0}
-.who-bar .spacer{flex:1}
+.me-btn:hover{background:var(--panel-2)}
+.me-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.me-btn img{width:100%;height:100%;object-fit:cover;display:block}
+/* 老師的頭像鑲一圈重點色 —— 原本那顆「老師」徽章的工作,
+   收進選單之後頂欄仍然看得出來現在是哪一邊 */
+.me-btn.is-teacher{border-color:var(--gold-edge)}
+.me-menu{
+  position:absolute;top:calc(100% + 8px);right:0;z-index:30;
+  min-width:180px;max-width:min(264px, calc(100vw - 28px));
+  padding:12px;
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--radius-md);box-shadow:var(--shadow-md);
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+}
+.me-menu .who{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.me-menu b{
+  font-size:var(--fs-sm);font-weight:500;color:var(--muted-bright);
+  overflow-wrap:anywhere;min-width:0;
+}
+.me-menu .btn{width:100%}
 .badge{
   font-size:var(--fs-2xs);color:var(--gold);letter-spacing:.08em;
   border:1px solid var(--gold-edge);border-radius:var(--radius-pill);padding:2px 9px;flex:none;
@@ -658,6 +682,23 @@ footer{
   </div>
   <div class="header-right">
     <button class="btn" id="langToggle" aria-pressed="false" data-i18n-attr="aria-label:langToggleLabel,title:langToggleTitle" data-i18n="langToggleText">EN</button>
+    <!-- ══ 誰署名了 ══ -->
+    <div class="me-wrap" id="meWrap" hidden>
+      <button class="me-btn" id="meBtn" type="button" aria-expanded="false" aria-haspopup="true"
+              data-i18n-attr="aria-label:meAria,title:meAria">
+        <img id="whoPhoto" hidden alt="" width="38" height="38" referrerpolicy="no-referrer">
+        <svg id="whoFallback" viewBox="0 0 24 24" width="20" height="20" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.6 3.1-5.5 7-5.5s7 1.9 7 5.5"></path></svg>
+      </button>
+      <div class="me-menu" id="meMenu" hidden>
+        <span class="who">
+          <b id="whoName">—</b>
+          <span class="badge" id="teacherBadge" hidden data-i18n="teacherBadge">老師</span>
+        </span>
+        <button class="btn ghost small" id="signOutBtn" type="button" data-i18n="signOutText">闔上簿本</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -905,17 +946,6 @@ footer{
       </div>
     </section>
   </section>
-
-  <!-- ══ 誰署名了 ══ -->
-  <div class="who-bar" id="whoBar" hidden>
-    <span class="me">
-      <img id="whoPhoto" hidden alt="" width="26" height="26" referrerpolicy="no-referrer">
-      <b id="whoName">—</b>
-    </span>
-    <span class="badge" id="teacherBadge" hidden data-i18n="teacherBadge">老師</span>
-    <span class="spacer"></span>
-    <button class="btn ghost small" id="signOutBtn" type="button" data-i18n="signOutText">闔上簿本</button>
-  </div>
 </main>
 
 <footer>LessonNotes</footer>
@@ -993,7 +1023,7 @@ const I18N = {
     kindLesson: "課堂紀錄", kindReply: "家長寫的", kindTeacherReply: "老師回覆",
     rosterWaiting: "家長寫了一句 · {d}",
     roleTeacher: "老師", roleParent: "家長", parentOf: "{name}的家長", listSep: "、",
-    signOutText: "闔上簿本", teacherBadge: "老師",
+    signOutText: "闔上簿本", teacherBadge: "老師", meAria: "目前署名的人",
     editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
     edited: "已修改",
     taskLabel: "這週要練的（一行一項，可以不填）",
@@ -1086,7 +1116,7 @@ const I18N = {
     kindLesson: "Lesson note", kindReply: "From the family", kindTeacherReply: "Teacher's note",
     rosterWaiting: "The family wrote · {d}",
     roleTeacher: "Teacher", roleParent: "Parent", parentOf: "{name}'s family", listSep: ", ",
-    signOutText: "Close the notebook", teacherBadge: "Teacher",
+    signOutText: "Close the notebook", teacherBadge: "Teacher", meAria: "Who the notebook is signed to",
     editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
     edited: "edited",
     taskLabel: "To practise this week (one per line, optional)",
@@ -1164,7 +1194,7 @@ function applyLanguage(lang){
      不吃 data-i18n,換語言之後要重畫一次 */
   setBusy(busy);
   if (lastErrKey) showError(lastErrKey);
-  renderWhoBar();
+  renderMe();
   renderComposer();
   renderRoster();
   renderTimeline();
@@ -1256,7 +1286,8 @@ function show(name){
   VIEWS.forEach(id => { $(id).hidden = ("view" + name.charAt(0).toUpperCase() + name.slice(1)) !== id; });
   // 署名之後簿本自己有抬頭,上面那段介紹就收起來
   $("intro").hidden = !(name === "out" || name === "setup" || name === "noDb");
-  $("whoBar").hidden = !me;
+  $("meWrap").hidden = !me;
+  closeMeMenu();   // 換頁的時候不要讓選單留在畫面上
 }
 
 function showError(key){
@@ -1303,15 +1334,26 @@ function whoLabel(){
   return acct;   // 還沒取名字的時候只剩帳號可以顯示
 }
 
-function renderWhoBar(){
-  $("whoBar").hidden = !me;
-  if (!me) return;
+function renderMe(){
+  $("meWrap").hidden = !me;
+  if (!me) { closeMeMenu(); return; }
   $("whoName").textContent = whoLabel();
   $("teacherBadge").hidden = !amTeacher;
+  $("meBtn").classList.toggle("is-teacher", amTeacher);
   const img = $("whoPhoto");
   if (me.photoURL) { img.src = me.photoURL; img.hidden = false; }
   else { img.hidden = true; img.removeAttribute("src"); }
+  /* 沒有大頭貼的時候換成線稿的人 —— 空的圓圈看起來像沒載完 */
+  $("whoFallback").hidden = !!me.photoURL;
 }
+
+/* 選單開關。點別的地方或按 Esc 都要收起來,不然它會蓋住底下的簿本 */
+function openMeMenu(on){
+  const menu = $("meMenu"), btn = $("meBtn");
+  menu.hidden = !on;
+  btn.setAttribute("aria-expanded", on ? "true" : "false");
+}
+function closeMeMenu(){ openMeMenu(false); }
 
 /* ══════════════════════════════════════════════════════════════
    4. 日期
@@ -1403,7 +1445,7 @@ function renderRoster(){
   // 家長只有在不只一個孩子時才會看到這一頁,標題與按鈕都要換成家長的說法
   document.querySelector('#viewRoster h2').textContent = amTeacher ? t("rosterTitle") : t("myKids");
   $("addKidBtn").hidden = amTeacher;
-  renderWhoBar();
+  renderMe();
 
   list.forEach(st => {
     const b = document.createElement("button");
@@ -1718,7 +1760,7 @@ function openNotebook(id){
   renderNotebookHead();
   renderComposer();
   renderTimeline();
-  renderWhoBar();
+  renderMe();
   $("renameBox").hidden = true;
   show("notebook");
   watchEntries(id);
@@ -2316,7 +2358,7 @@ $("renameForm").addEventListener("submit", async ev => {
     await updateDoc(doc(db, "students", current.id), { name: name, slot: slot });
     current.name = name; current.slot = slot;
     renderNotebookHead();
-    renderWhoBar();
+    renderMe();
     $("renameBox").hidden = true;
   } catch (e) {
     console.warn("rename:", e && e.code, e && e.message);
@@ -2433,11 +2475,11 @@ async function startApp(){
     if (stopEntries) { stopEntries(); stopEntries = null; }
     current = null; entries = []; students = [];
 
-    if (!user) { amTeacher = false; renderWhoBar(); show("out"); return; }
+    if (!user) { amTeacher = false; renderMe(); show("out"); return; }
 
     amTeacher = isTeacherUser(user);
     showError(null);
-    renderWhoBar();
+    renderMe();
     $("dateInput").value = todayISO();
     renderComposer();
     watchStudents();
@@ -2461,7 +2503,23 @@ async function startApp(){
     }
   };
 
+  $("meBtn").onclick = (e) => {
+    e.stopPropagation();
+    openMeMenu($("meMenu").hidden);
+  };
+  /* 點到選單以外的地方就收起來。點在選單裡面不算(不然按不到登出) */
+  document.addEventListener("click", (e) => {
+    if ($("meMenu").hidden) return;
+    if (!$("meWrap").contains(e.target)) closeMeMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || $("meMenu").hidden) return;
+    closeMeMenu();
+    $("meBtn").focus();
+  });
+
   $("signOutBtn").onclick = async () => {
+    closeMeMenu();
     try { await fb.signOut(auth); } catch (e) { showError("errGeneric"); }
   };
 }
