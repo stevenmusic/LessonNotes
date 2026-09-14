@@ -621,6 +621,23 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 .me-menu .btn{width:100%}
 /* 這本簿子的設定:⋯ 收在抬頭右邊,跟每一筆紀錄上的 ⋯ 是同一個語言 */
 .nb-menu-wrap{position:relative;flex:none}
+/* 簿本裡的搜尋列。放大鏡在抬頭上(跟通訊軟體一樣),點了才長出這一條 */
+.nb-search{
+  display:flex;align-items:center;gap:8px;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-pill);
+  padding:6px 8px 6px 14px;margin:2px 0 8px;flex:none;
+}
+.nb-search > svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.nb-search input{
+  flex:1;min-width:0;background:none;border:0;padding:8px 0;
+  font-family:inherit;font-size:var(--fs-lg);color:var(--ivory);
+}
+.nb-search input:focus{outline:none;border:0;box-shadow:none}
+.nb-search input::-webkit-search-cancel-button{-webkit-appearance:none}
+.nb-search .hits{flex:none;font-size:var(--fs-sm);color:var(--muted);white-space:nowrap}
+/* 圈起來的字用 --panel 當文字色:淺色下是金底白字、深色下是金底暗字,
+   兩邊都讀得動。寫死 #fff 的話深色模式是亮金配白,對比只有 2 出頭 */
+mark{background:var(--gold);color:var(--panel);border-radius:3px;padding:0 2px}
 .nb-more{
   width:38px;height:38px;flex:none;display:grid;place-items:center;
   background:none;border:0;border-radius:50%;cursor:pointer;
@@ -1022,6 +1039,10 @@ footer{
       <!-- 這本簿子的設定收在一顆 ⋯ 後面。原本抬頭掛著「改名字」,
            那是一年按一次的動作卻佔著抬頭最好的位置,而且就長在孩子的名字旁邊,
            很容易誤按;「封存」更糟 —— 它躲在「改名字」裡面,沒有人猜得到 -->
+      <button class="nb-more" id="nbSearchBtn" type="button"
+              data-i18n-attr="aria-label:searchAria,title:searchAria">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+      </button>
       <div class="nb-menu-wrap" id="nbMenuWrap">
         <button class="nb-more" id="nbMoreBtn" type="button" aria-expanded="false" aria-haspopup="true"
                 data-i18n-attr="aria-label:nbMoreAria,title:nbMoreAria">⋯</button>
@@ -1029,6 +1050,17 @@ footer{
           <button class="btn ghost small" type="button" id="editNameBtn" data-i18n="editName">改名字</button>
         </div>
       </div>
+    </div>
+
+    <!-- 簿本裡的搜尋。三年份的課堂紀錄要找「什麼時候開始練哈農」,
+         沒有這個就只能自己往上翻 -->
+    <div class="nb-search" id="nbSearch" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+      <input type="search" id="searchInput" autocomplete="off"
+             data-i18n-attr="placeholder:searchPlaceholder,aria-label:searchAria"
+             placeholder="在這本簿子裡找…">
+      <span class="hits" id="searchHits"></span>
+      <button class="btn ghost small" type="button" id="searchClose" data-i18n="cancel">取消</button>
     </div>
 
     <section class="sheet sheet--plain" id="renameBox" hidden>
@@ -1209,7 +1241,9 @@ const I18N = {
     nameSaving: "正在寫上…",
     nameHint: "之後隨時可以改。",
     nameEmpty: "還沒寫名字。",
-    editName: "改名字", saveName: "存起來", cancel: "取消",
+    editName: "改名字",
+    searchAria: "在這本簿子裡找", searchPlaceholder: "在這本簿子裡找…",
+    searchHits: "{n} 筆", searchNone: "找不到", saveName: "存起來", cancel: "取消",
     rosterTitle: "名冊",
     rosterWaitingCount: "{k} 本在等你回", rosterNewCount: "{k} 本有新的",
     rosterEmpty: "還沒有家長署名。請家長用 Google 帳號進來一次，名字就會出現在這裡。",
@@ -1305,7 +1339,9 @@ const I18N = {
     nameSaving: "Writing…",
     nameHint: "You can change it any time.",
     nameEmpty: "The name is still blank.",
-    editName: "Rename", saveName: "Save", cancel: "Cancel",
+    editName: "Rename",
+    searchAria: "Search this notebook", searchPlaceholder: "Search this notebook…",
+    searchHits: "{n} found", searchNone: "Nothing found", saveName: "Save", cancel: "Cancel",
     rosterTitle: "The register",
     rosterWaitingCount: "{k} waiting for you", rosterNewCount: "{k} with something new",
     rosterEmpty: "No family has signed in yet. Once a parent signs in with Google, their name appears here.",
@@ -1480,6 +1516,7 @@ function renderBoot(){
 }
 let stickBottom = false;  // 下一次重畫要不要捲到最新的一筆
 let seenMark = 0;         // 翻開這一本的那一刻,我上次看到哪裡(畫那條線用的)
+let searchQ = "";         // 簿本裡的搜尋字串(空字串 = 沒在搜尋)
 /* 捲的是時間軸那一格,不是整頁 —— 簿本這一頁整頁是不捲的 */
 function nearBottom(){
   const el = $("nbScroll");
@@ -2019,29 +2056,74 @@ function entryText(en){
   return bits.join("\n").trim();
 }
 
+/* 搜尋比對的範圍跟「複製」一樣:內文加上作業清單 —— 老師常常把譜名寫在作業裡 */
+function hitsQuery(en, q){
+  return entryText(en).toLowerCase().indexOf(q) >= 0;
+}
+/* 把命中的字圈起來。**用 DOM 節點組,不要組 innerHTML** ——
+   內容是使用者自己打的字,拼進 HTML 就是一個注入口 */
+function markUp(text, q){
+  const frag = document.createDocumentFragment();
+  if (!q) { frag.appendChild(document.createTextNode(text)); return frag; }
+  const low = text.toLowerCase();
+  let i = 0;
+  for (;;) {
+    const at = low.indexOf(q, i);
+    if (at < 0) break;
+    if (at > i) frag.appendChild(document.createTextNode(text.slice(i, at)));
+    const m = document.createElement("mark");
+    m.textContent = text.slice(at, at + q.length);
+    frag.appendChild(m);
+    i = at + q.length;
+  }
+  frag.appendChild(document.createTextNode(text.slice(i)));
+  return frag;
+}
+
+function openSearch(on){
+  searchQ = "";
+  $("nbSearch").hidden = !on;
+  $("searchInput").value = "";
+  $("searchHits").textContent = "";
+  renderTimeline();
+  if (on) setTimeout(() => $("searchInput").focus(), 30);
+}
+
 function renderTimeline(){
   const box = $("timeline");
   box.textContent = "";
   const empty = $("nbEmpty");
   if (!current) return;
+
+  /* 搜尋中:只留命中的那幾筆。日期分隔線照常(找到的那一筆是哪一天很重要),
+     但「以下是新的」在搜尋結果裡沒有意義,收起來 */
+  const q = searchQ.trim().toLowerCase();
+  const list = q ? entries.filter(en => hitsQuery(en, q)) : entries;
+  if (q) {
+    $("searchHits").textContent = list.length ? t("searchHits", { n: list.length }) : t("searchNone");
+  } else if (!$("nbSearch").hidden) {
+    $("searchHits").textContent = "";
+  }
+
   if (!entries.length) {
     empty.hidden = false;
     empty.textContent = amTeacher ? t("emptyTeacher") : t("emptyParent");
     return;
   }
+  if (q && !list.length) { empty.hidden = false; empty.textContent = t("searchNone"); return; }
   empty.hidden = true;
 
   /* 「以下是新的」那條線。用的是**翻開這一本的那一瞬間**記下來的位置
      (`seenMark`),不是即時的已讀位置 —— 不然人還在看,線就自己往下跑掉了。
      正在看的時候進來的新訊息會落在線下面,跟通訊軟體一樣 */
   let newIdx = -1;
-  if (seenMark > 0) {
+  if (seenMark > 0 && !q) {
     newIdx = entries.findIndex(en =>
       entryMs(en) > seenMark && !(me && en.authorUid === me.uid));
   }
 
   let lastDay = null;
-  entries.forEach((en, i) => {
+  list.forEach((en, i) => {
     if (i === newIdx) {
       const nl = document.createElement("div");
       nl.className = "new-sep";
@@ -2113,7 +2195,7 @@ function renderTimeline(){
       }
       const body = document.createElement("div");
       body.className = "entry-body";
-      body.textContent = en.body || "";
+      body.appendChild(markUp(en.body || "", q));
       bubble.appendChild(body);
       const tk = tasksNode(en);
       if (tk) bubble.appendChild(tk);
@@ -2224,6 +2306,7 @@ function renderTimeline(){
      所以只有「本來就在底部附近」時才跟著捲 */
   /* 翻開簿本時,有「以下是新的」就停在那條線上,沒有才停在最新的一筆 ——
      有五則沒看過還直接跳到最後一則的話,前面四則就被跳過去了 */
+  if (q) { $("nbScroll").scrollTop = 0; return; }
   if (stickBottom) {
     stickBottom = false;
     const nl = box.querySelector(".new-sep");
@@ -2294,6 +2377,8 @@ function openNotebook(id){
   /* 先把「上次看到哪裡」抄下來再更新,不然線就畫不出來了。
      這個值在這一本開著的期間都不變 */
   seenMark = seenAt(id);
+  searchQ = "";
+  $("nbSearch").hidden = true;    // 換一本簿子就不留著上一次的搜尋
   current = st;
   entries = [];
   editingId = null; confirmDelId = null; openActsId = null;
@@ -2915,6 +3000,12 @@ function openNbMenu(on){
 }
 function closeNbMenu(){ openNbMenu(false); }
 $("nbMoreBtn").onclick = (e) => { e.stopPropagation(); openNbMenu($("nbMenu").hidden); };
+$("nbSearchBtn").onclick = () => { closeNbMenu(); openSearch($("nbSearch").hidden); };
+$("searchClose").onclick = () => openSearch(false);
+$("searchInput").addEventListener("input", e => { searchQ = e.target.value; renderTimeline(); });
+$("searchInput").addEventListener("keydown", e => {
+  if (e.key === "Escape") { e.stopPropagation(); openSearch(false); }
+});
 document.addEventListener("click", (e) => {
   if ($("nbMenu").hidden) return;
   if (!$("nbMenuWrap").contains(e.target)) closeNbMenu();
