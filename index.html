@@ -449,7 +449,15 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
    插在裡面的話它會把底下的訊息整個往下推,看起來像文字自己跑掉了。
    用 position:fixed(不是 absolute):#nbScroll 有 overflow,
    absolute 會被裁掉,fixed 才跑得出去。位置交給 placeActs() 算 */
-.acts-scrim{position:fixed;inset:0;z-index:39;background:transparent}
+.acts-scrim{
+  position:fixed;inset:0;z-index:39;
+  /* 壓暗其餘的畫面,被長按的那一筆才浮出來。只在泡泡上畫一圈是不夠的 ——
+     金色的圈壓在淡色的課堂紀錄泡泡上幾乎看不見(踩過) */
+  background:rgba(20,16,10,.28);
+  animation:scrimIn .12s ease-out;
+}
+@keyframes scrimIn{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){ .acts-scrim{animation:none} }
 .entry-acts{
   position:fixed;z-index:40;visibility:hidden;
   display:flex;flex-direction:column;gap:2px;
@@ -480,7 +488,10 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
   .more-btn[aria-expanded="true"]{opacity:1}
 }
 /* 選單打開時把那一筆圈起來,不然選單長在下面,看不出是哪一筆的 */
-.bubble.is-acted{box-shadow:0 0 0 2px var(--gold)}
+.bubble.is-acted{
+  position:relative;z-index:40;          /* 浮到幕上面,不要跟著被壓暗 */
+  box-shadow:0 0 0 2px var(--gold), var(--shadow-md);
+}
 /* 手機上泡泡的文字不給選:長按被我們接走了,兩邊搶會跳出系統的選取放大鏡。
    要抄字走選單裡的「複製」。桌機維持可以選 */
 @media (pointer:coarse){
@@ -488,6 +499,8 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 }
 .entry-edit{display:grid;gap:8px}
 .entry-edit textarea{min-height:80px}
+.entry-edit .lbl{display:block;margin-top:10px}
+.entry-edit .lbl:first-child{margin-top:0}
 .entry-edit .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (pointer:coarse){ .entry-acts button{padding:8px 10px} }
 
@@ -1214,6 +1227,7 @@ const I18N = {
     hubText: "其他工具",
     nbMoreAria: "這本簿子的設定",
     copyEntry: "複製", copied: "複製了", copyFail: "複製不了",
+    editBodyLabel: "這堂課寫了什麼",
     editEntry: "改", delEntry: "刪", delConfirm: "真的刪掉？", delYes: "刪掉", saveEntry: "存起來",
     edited: "已修改",
     taskLabel: "這週要練的（一行一項，可以不填）",
@@ -1309,6 +1323,7 @@ const I18N = {
     hubText: "Other tools",
     nbMoreAria: "Notebook settings",
     copyEntry: "Copy", copied: "Copied", copyFail: "Could not copy",
+    editBodyLabel: "What the lesson covered",
     editEntry: "Edit", delEntry: "Delete", delConfirm: "Delete this?", delYes: "Delete", saveEntry: "Save",
     edited: "edited",
     taskLabel: "To practise this week (one per line, optional)",
@@ -2418,9 +2433,18 @@ function editBox(en){
   };
 
   row.append(save, cancel);
-  if (dateIn) wrap.appendChild(dateIn);
+  /* 每一格都要有標籤。改寫課堂紀錄時會同時出現三個框(日期、內文、作業),
+     沒有標籤的話把作業那格清空就分不出哪一格是哪一格了 */
+  const lbl = (key) => {
+    const el = document.createElement("span");
+    el.className = "lbl";
+    el.textContent = t(key);
+    return el;
+  };
+  if (dateIn) { wrap.appendChild(lbl("lessonDateLabel")); wrap.appendChild(dateIn); }
+  if (taskIn) wrap.appendChild(lbl("editBodyLabel"));
   wrap.appendChild(ta);
-  if (taskIn) wrap.appendChild(taskIn);
+  if (taskIn) { wrap.appendChild(lbl("taskLabel")); wrap.appendChild(taskIn); }
   wrap.appendChild(row);
   return wrap;
 }
