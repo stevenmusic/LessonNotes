@@ -328,7 +328,7 @@ h2.title{
 
 /* ── 表單元件 ───────────────────────── */
 label.lbl{display:block;font-size:var(--fs-sm);color:var(--muted);letter-spacing:.06em;margin-bottom:6px}
-input[type="text"],input[type="date"],textarea{
+input[type="text"],input[type="date"],input[type="time"],textarea{
   width:100%;font-family:inherit;font-size:var(--fs-lg);color:var(--ivory);
   background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);
   padding:11px 13px;line-height:1.6;
@@ -429,6 +429,16 @@ body.nb-mode .timeline{margin-bottom:0;align-content:start;padding-bottom:6px}
 .composer-fields{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 /* 上課日期收成一列,省下一整行 */
 .field-row.inline{display:flex;align-items:center;gap:12px}
+/* 上課時間:星期 + 時間兩格並排。純文字的話排不了序、也做不出提醒 */
+.slot-row{display:flex;gap:10px}
+.slot-row select{flex:1 1 auto;min-width:0}
+.slot-row input[type="time"]{flex:0 1 46%;min-width:0}
+select{
+  background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:12px 14px;font-family:inherit;font-size:var(--fs-lg);color:var(--ivory);
+  width:100%;
+}
+select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,162,75,.14)}
 .field-row.inline .lbl{margin:0;flex:none}
 .field-row.inline input{flex:1;min-width:0}
 @media (pointer:coarse){
@@ -988,9 +998,11 @@ footer{
                  data-i18n-attr="placeholder:namePlaceholder" placeholder="例如：林小明">
         </div>
         <div class="field-row">
-          <label class="lbl" for="slotInput" data-i18n="slotLabel">上課時間（可以不填）</label>
-          <input type="text" id="slotInput" maxlength="40" autocomplete="off"
-                 data-i18n-attr="placeholder:slotPlaceholder" placeholder="例如：每週三 16:00">
+          <label class="lbl" for="slotDay" data-i18n="slotLabel">上課時間（可以不填）</label>
+          <div class="slot-row">
+            <select id="slotDay" data-i18n-attr="aria-label:slotDayAria"></select>
+            <input type="time" id="slotTime" data-i18n-attr="aria-label:slotTimeAria">
+          </div>
         </div>
         <div class="form-actions">
           <button class="btn primary" type="submit" id="nameSubmitBtn" data-i18n="nameSubmit">開始這本簿子</button>
@@ -1071,8 +1083,11 @@ footer{
             <input type="text" id="renameInput" maxlength="40" autocomplete="off">
           </div>
           <div class="field-row">
-            <label class="lbl" for="reslotInput" data-i18n="slotLabel">上課時間（可以不填）</label>
-            <input type="text" id="reslotInput" maxlength="40" autocomplete="off">
+            <label class="lbl" for="reslotDay" data-i18n="slotLabel">上課時間（可以不填）</label>
+            <div class="slot-row">
+              <select id="reslotDay" data-i18n-attr="aria-label:slotDayAria"></select>
+              <input type="time" id="reslotTime" data-i18n-attr="aria-label:slotTimeAria">
+            </div>
           </div>
           <div class="form-actions">
             <button class="btn primary" type="submit" id="renameSaveBtn" data-i18n="saveName">存起來</button>
@@ -1236,6 +1251,9 @@ const I18N = {
     nameLabel: "孩子的名字",
     namePlaceholder: "例如：林小明",
     slotLabel: "上課時間（可以不填）",
+    slotDayAria: "星期幾", slotTimeAria: "幾點", slotNone: "不固定",
+    weekdays: ["週日", "週一", "週二", "週三", "週四", "週五", "週六"],
+    slotEvery: "每{d} {t}",
     slotPlaceholder: "例如：每週三 16:00",
     nameSubmit: "開始這本簿子",
     nameSaving: "正在寫上…",
@@ -1334,6 +1352,9 @@ const I18N = {
     nameLabel: "Child's name",
     namePlaceholder: "e.g. Emma Lin",
     slotLabel: "Lesson time (optional)",
+    slotDayAria: "Day of the week", slotTimeAria: "Time", slotNone: "No fixed day",
+    weekdays: ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"],
+    slotEvery: "{d} {t}",
     slotPlaceholder: "e.g. Wednesdays 4pm",
     nameSubmit: "Start this notebook",
     nameSaving: "Writing…",
@@ -1445,7 +1466,12 @@ function applyLanguage(lang){
      不吃 data-i18n,換語言之後要重畫一次 */
   setBusy(busy);
   if (lastErrKey) showError(lastErrKey);
+  fillDays($("slotDay"));
+  fillDays($("reslotDay"));
   renderMe();
+  /* 簿本抬頭也要重畫:上課時間是從 slotDay/slotTime 組出來的,
+     換語言之後星期要跟著換。以前那一格是使用者打的原字,不重畫也看不出來 */
+  renderNotebookHead();
   renderComposer();
   renderRoster();
   renderTimeline();
@@ -1737,6 +1763,34 @@ function entryMs(en){
    同一個概念,兩邊的對方不一樣。
    以前這裡寫死 `lastEntryBy === "parent"`,家長那邊會變成「我自己寫了」
    就標成需要注意,意思剛好相反(踩過) */
+/* 上課時間從「星期 + 時間」兩個欄位組出來。舊資料是一整串純文字(`slot`),
+   組不出來就原樣拿出來用 —— 不要為了換格式把人家填過的字弄丟 */
+function slotText(st){
+  if (!st) return "";
+  const d = st.slotDay;
+  const tm = st.slotTime || "";
+  if (d === null || d === undefined || d === "") return st.slot || "";
+  const days = I18N[LANG].weekdays || I18N.zh.weekdays;
+  const name = days[Number(d)] || "";
+  if (!name) return st.slot || "";
+  return t("slotEvery", { d: name, t: tm }).trim();
+}
+/* 星期的下拉選單。語言換了要重填,所以做成函式 */
+function fillDays(sel){
+  if (!sel) return;
+  const keep = sel.value;
+  sel.textContent = "";
+  const none = document.createElement("option");
+  none.value = ""; none.textContent = t("slotNone");
+  sel.appendChild(none);
+  (I18N[LANG].weekdays || I18N.zh.weekdays).forEach((w, i) => {
+    const o = document.createElement("option");
+    o.value = String(i); o.textContent = w;
+    sel.appendChild(o);
+  });
+  sel.value = keep;
+}
+
 function isWaiting(st){
   if (st.archived) return false;   // 封存的不算
   const other = amTeacher ? "parent" : "teacher";
@@ -1813,7 +1867,7 @@ function renderRoster(){
       sub.textContent = t("rosterTasks", { d: lt.d, n: lt.n });
       sub.className = "tasks-left";
     } else {
-      sub.textContent = st.slot || t("rosterNever");
+      sub.textContent = slotText(st) || t("rosterNever");
     }
     nm.append(strong, sub);
 
@@ -1948,7 +2002,8 @@ function renderNotebookHead(){
   const slot = $("nbSlot");
   const bits = [];
   if (current.archived) bits.push(t("archivedTag"));
-  if (current.slot) bits.push(current.slot);
+  const sl = slotText(current);
+  if (sl) bits.push(sl);
   slot.textContent = bits.join(" · ");
   slot.hidden = !bits.length;
   // 老師一律從名冊進來;家長只有在不只一個孩子時才有清單可回
@@ -2414,17 +2469,26 @@ function watchEntries(studentId){
   });
 }
 
-async function createStudent(name, slot){
+/* `slot` 仍然寫進去,但它是**從那兩個欄位組出來的顯示字串**,不是資料來源。
+   這樣舊版的程式、或任何還在讀 slot 的地方都不會壞 */
+function slotFields(day, tm){
+  const has = day !== "" && day !== null && day !== undefined;
+  return {
+    slotDay: has ? Number(day) : null,
+    slotTime: has ? (tm || "") : "",
+    slot: has ? slotText({ slotDay: Number(day), slotTime: tm || "" }) : "",
+  };
+}
+async function createStudent(name, day, tm){
   const { collection, addDoc, serverTimestamp } = fb;
-  return addDoc(collection(db, "students"), {
+  return addDoc(collection(db, "students"), Object.assign({
     name: name,
-    slot: slot || "",
     parentUid: me.uid,
     parentName: me.displayName || "",
     parentEmail: me.email || "",
     createdAt: serverTimestamp(),
     lastEntryAt: null,
-  });
+  }, slotFields(day, tm)));
 }
 
 async function addEntry(text){
@@ -2975,13 +3039,14 @@ $("photoInput").onchange = async ev => {
 $("nameForm").addEventListener("submit", async ev => {
   ev.preventDefault();
   const name = $("nameInput").value.trim();
-  const slot = $("slotInput").value.trim();
+  const day = $("slotDay").value;
+  const tm = $("slotTime").value;
   if (!name) { slipMsg("nameErr", "nameErrText", "nameEmpty"); $("nameInput").focus(); return; }
   slipMsg("nameErr", "nameErrText", null);
   const btn = $("nameSubmitBtn");
   btn.disabled = true; btn.dataset.busy = "1"; btn.textContent = t("nameSaving");
   try {
-    const ref = await createStudent(name, slot);
+    const ref = await createStudent(name, day, tm);
     addingKid = false;
     // 剛加的那一本直接翻開,不要讓家長自己再從清單找一次
     setTimeout(() => { if (students.find(x => x.id === ref.id)) openNotebook(ref.id); }, 60);
@@ -3023,7 +3088,9 @@ $("editNameBtn").onclick = () => {
   box.hidden = !open;
   if (open && current) {
     $("renameInput").value = current.name || "";
-    $("reslotInput").value = current.slot || "";
+    fillDays($("reslotDay"));
+    $("reslotDay").value = (current.slotDay === 0 || current.slotDay) ? String(current.slotDay) : "";
+    $("reslotTime").value = current.slotTime || "";
     slipMsg("renameErr", "renameErrText", null);
     $("renameInput").focus();
   }
@@ -3036,13 +3103,14 @@ $("renameForm").addEventListener("submit", async ev => {
   if (!current) return;
   const name = $("renameInput").value.trim();
   if (!name) { slipMsg("renameErr", "renameErrText", "nameEmpty"); $("renameInput").focus(); return; }
-  const slot = $("reslotInput").value.trim();
+  const sf = slotFields($("reslotDay").value, $("reslotTime").value);
   const btn = $("renameSaveBtn");
   btn.disabled = true;
   try {
     const { doc, updateDoc } = fb;
-    await updateDoc(doc(db, "students", current.id), { name: name, slot: slot });
-    current.name = name; current.slot = slot;
+    await updateDoc(doc(db, "students", current.id), Object.assign({ name: name }, sf));
+    current.name = name;
+    Object.assign(current, sf);
     renderNotebookHead();
     renderMe();
     $("renameBox").hidden = true;
@@ -3110,7 +3178,9 @@ window.addEventListener("scroll", () => { if (swipeRow) closeSwipe(); }, { passi
 
 $("addKidBtn").onclick = () => {
   addingKid = true;
-  $("nameInput").value = ""; $("slotInput").value = "";
+  $("nameInput").value = "";
+  fillDays($("slotDay"));
+  $("slotDay").value = ""; $("slotTime").value = "";
   slipMsg("nameErr", "nameErrText", null);
   show("naming");
   $("nameInput").focus();
